@@ -234,6 +234,8 @@
         leaderboardHTML,
         favsHTML,
         combobox,
+        setHTML,
+        confetti,
       } from "./common.js";
       butterflies(8);
 
@@ -386,14 +388,16 @@
             show("s-ended");
             return;
           }
+          if ($("s-done").hidden) setTimeout(() => confetti(), 600);
           show("s-done");
           const sc = (g.scores && g.scores[db.uid]) || 0,
             total = g.answered || 0;
           $("d-score").textContent = `You got ${sc} of ${total} right.`;
-          $("d-leader").innerHTML = leaderboardHTML(
-            g.results && g.results.leaderboard,
+          setHTML(
+            $("d-leader"),
+            leaderboardHTML(g.results && g.results.leaderboard),
           );
-          $("d-favs").innerHTML = favsHTML(g.results && g.results.favs);
+          setHTML($("d-favs"), favsHTML(g.results && g.results.favs));
           return;
         }
         if (g.session) remember("wst-session", g.session);

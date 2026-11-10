@@ -494,6 +494,8 @@
         podiumHTML,
         leaderboardHTML,
         favsHTML,
+        setHTML,
+        confetti,
         PLAYER_URL,
       } from "./common.js";
       butterflies(12);
@@ -512,6 +514,12 @@
         subs = [];
       const views = ["v-signin", "v-home", "v-setup", "v-intro", "v-stage", "v-results"];
       const show = (v) => {
+        if (v === "results" && view !== "results") {
+          // fresh visit: replay the entrance animations and celebrate
+          delete $("r-leader").dataset.html;
+          delete $("r-favs").dataset.html;
+          setTimeout(() => view === "results" && confetti(), 600);
+        }
         view = v;
         views.forEach((x) => ($(x).hidden = x !== "v-" + v));
         render();
@@ -1137,8 +1145,8 @@
           }
         }
         if (view === "results") {
-          $("r-leader").innerHTML = leaderboardHTML(g.results?.leaderboard);
-          $("r-favs").innerHTML = favsHTML(g.results?.favs);
+          setHTML($("r-leader"), leaderboardHTML(g.results?.leaderboard));
+          setHTML($("r-favs"), favsHTML(g.results?.favs));
         }
       }
 

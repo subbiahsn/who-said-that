@@ -103,13 +103,79 @@ export function podiumHTML(top, answer, total) {
 
 export function leaderboardHTML(rows) {
   if (!rows || !rows.length) return '<p class="note">No correct guesses were recorded.</p>';
-  return `<ol class="leader">${rows.map(r => `<li class="rank-${r.rank}"><span class="medal">${r.rank}</span><span class="lname">${esc(r.name)}</span><span class="lscore">${r.correct} correct</span></li>`).join("")}</ol>`;
+  const n = rows.length;
+  // Last place appears first, the winner arrives last.
+  return `<ol class="leader">${rows.map((r, i) => `<li class="rank-${r.rank}" style="--d:${(n - 1 - i) * 0.55 + 0.4}s"><span class="medal">${r.rank === 1 ? "👑" : r.rank}</span><span class="lname">${esc(r.name)}</span><span class="lscore"><span class="count" data-to="${r.correct}">0</span> correct</span></li>`).join("")}</ol>`;
 }
 
 export function favsHTML(rows) {
   if (!rows || !rows.length) return '<p class="note">No favourites were picked.</p>';
-  return `<div class="favs">${rows.map((f, i) => `<figure class="fav${i === 0 ? " top" : ""}"><blockquote>${esc(f.text)}</blockquote>
-    <figcaption><span>${esc(f.name)}</span><span class="hearts">♥ ${f.likes}</span></figcaption></figure>`).join("")}</div>`;
+  const n = rows.length;
+  return `<div class="favs">${rows.map((f, i) => `<figure class="fav${i === 0 ? " top" : ""}" style="--d:${(n - 1 - i) * 0.7 + 0.6}s"><blockquote>${esc(f.text)}</blockquote>
+    <figcaption><span>${esc(f.name)}</span><span class="hearts">♥ <span class="count" data-to="${f.likes}">0</span></span></figcaption></figure>`).join("")}</div>`;
+}
+
+/* Set innerHTML only when it changed, so live re-renders don't replay animations. */
+export function setHTML(el, html) {
+  if (el.dataset.html === html) return false;
+  el.dataset.html = html; el.innerHTML = html;
+  runCounters(el);
+  return true;
+}
+
+const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Numbers tick up from 0 once their row has appeared. */
+export function runCounters(root) {
+  root.querySelectorAll(".count").forEach((el) => {
+    const to = +el.dataset.to || 0;
+    if (reduced() || to === 0) { el.textContent = to; return; }
+    const row = el.closest("li, figure");
+    const delay = (parseFloat(row && row.style.getPropertyValue("--d")) || 0) * 1000 + 300;
+    const dur = 900, t0 = performance.now() + delay;
+    const tick = (t) => {
+      const p = Math.min(1, Math.max(0, (t - t0) / dur));
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+/* Confetti burst on a full-screen canvas. */
+export function confetti(ms = 5000) {
+  if (reduced()) return;
+  const cv = document.createElement("canvas");
+  cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50";
+  document.body.appendChild(cv);
+  const ctx = cv.getContext("2d"), dpr = Math.min(devicePixelRatio || 1, 2);
+  const fit = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; };
+  fit();
+  const colors = ["#f5b83d", "#ffdc8f", "#e0368c", "#2bb37b", "#5ab8ea", "#fff4e2"];
+  const bit = (x, vx, vy) => ({ x, y: -20 * Math.random() - 10, vx, vy, w: 6 + Math.random() * 8, h: 10 + Math.random() * 10,
+    r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: colors[Math.floor(Math.random() * colors.length)] });
+  const bits = [];
+  for (let i = 0; i < 160; i++) bits.push(bit(Math.random() * innerWidth, (Math.random() - .5) * 3, 2 + Math.random() * 4));
+  // two side cannons
+  for (let i = 0; i < 70; i++) {
+    const left = i % 2 === 0, b = bit(left ? 0 : innerWidth, (left ? 1 : -1) * (6 + Math.random() * 9), -(8 + Math.random() * 10));
+    b.y = innerHeight * .7; bits.push(b);
+  }
+  const start = performance.now();
+  const frame = (t) => {
+    const el = t - start;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.globalAlpha = el > ms - 1000 ? Math.max(0, (ms - el) / 1000) : 1;
+    bits.forEach((b) => {
+      b.vy += .12; b.vx *= .995; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r); ctx.scale(1, Math.cos(b.r * 2));
+      ctx.fillStyle = b.c; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); ctx.restore();
+    });
+    if (el < ms) requestAnimationFrame(frame); else cv.remove();
+  };
+  addEventListener("resize", fit);
+  requestAnimationFrame(frame);
 }
 
 /* Name autocomplete, shared by any input that needs it */
