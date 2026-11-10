@@ -1,218 +1,502 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Who Said That? Play</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Yeseva+One&display=swap">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<div class="band"></div>
-<div class="wrap">
-  <header style="text-align:center;display:flex;flex-direction:column;gap:6px">
-    <p class="eyebrow">Retreat · A little bit of magic</p>
-    <h1 class="title">Who Said <span class="q">That?</span></h1>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Who Said That? Play</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Yeseva+One&display=swap"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .howto {
+        margin: 8px 0 0;
+        padding-left: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="band"></div>
+    <div class="wrap">
+      <header
+        style="
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        "
+      >
+        <p class="eyebrow">A little bit of magic</p>
+        <h1 class="title">Who Said <span class="q">That?</span></h1>
+      </header>
 
-  <!-- connecting -->
-  <section class="card" id="s-connect"><div class="empty"><div class="spinner"></div><p class="note" id="connect-msg">Opening the door…</p></div></section>
+      <!-- connecting -->
+      <section class="card" id="s-connect">
+        <div class="empty">
+          <div class="spinner"></div>
+          <p class="note" id="connect-msg">Opening the door…</p>
+        </div>
+      </section>
 
-  <!-- join -->
-  <form class="card gold" id="s-join" hidden novalidate>
-    <h2 style="font-size:26px;color:var(--candle)">Welcome to the casa!</h2>
-    <p class="sub">Tell us your name so we can crown the best guesser at the end.</p>
-    <div><label for="me">Your name</label><input id="me" type="text" maxlength="40" autocomplete="name" placeholder="e.g. Priya Raman"></div>
-    <button class="btn gold big wide" id="join-btn" type="submit" disabled>Join the game</button>
-    <span class="status" id="join-status" role="status"></span>
-  </form>
+      <!-- join -->
+      <form class="card gold" id="s-join" hidden novalidate>
+        <h2 style="font-size: 26px; color: var(--candle)">
+          Welcome to the casa!
+        </h2>
+        <p class="sub">
+          Tell us your name so we can crown the best guesser at the end.
+        </p>
+        <div>
+          <label for="me">Your name</label
+          ><input
+            id="me"
+            type="text"
+            maxlength="40"
+            autocomplete="name"
+            placeholder="e.g. Priya Raman"
+          />
+        </div>
+        <button class="btn gold big wide" id="join-btn" type="submit" disabled>
+          Join the game
+        </button>
+        <span class="status" id="join-status" role="status"></span>
+      </form>
 
-  <!-- lobby -->
-  <section class="card" id="s-lobby" hidden>
-    <div class="empty">
-      <h2>You're in, <span id="lobby-name"></span>!</h2>
-      <p class="sub">Keep this page open. The first door opens when the host starts the game.</p>
-      <button class="btn small" id="rename" type="button" style="margin-top:6px">Not you? Change name</button>
+      <!-- lobby -->
+      <section class="card" id="s-lobby" hidden>
+        <div class="empty">
+          <h2>You're in, <span id="lobby-name"></span>!</h2>
+          <p class="sub" id="lobby-msg">
+            <b>The game hasn't started yet.</b> Keep this page open. The first
+            door opens when the host starts the game.
+          </p>
+          <button
+            class="btn small"
+            id="rename"
+            type="button"
+            style="margin-top: 6px"
+          >
+            Not you? Change name
+          </button>
+        </div>
+        <div style="border-top: 1.5px solid var(--line); padding-top: 16px">
+          <h3 style="font-size: 20px; color: var(--candle)">How to play</h3>
+          <ol class="howto">
+            <li>Each door shows one surprising fact about someone here.</li>
+            <li>Start typing a name, then pick it from the dropdown.</li>
+            <li>
+              Tap <b>Lock in my guess</b> to actually submit it. Nothing counts
+              until you lock it, and it can't be changed after.
+            </li>
+            <li>Tap the <b>♥ Favourite fact</b> button to mark (or unmark) a fact you love.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ended (game over and you weren't part of it) -->
+      <section class="card" id="s-ended" hidden>
+        <div class="empty">
+          <h2>The game has ended</h2>
+          <p class="sub">
+            The host has ended the last game. Keep this page open and the next
+            game will start here.
+          </p>
+        </div>
+      </section>
+
+      <!-- game -->
+      <section
+        id="s-game"
+        hidden
+        style="display: flex; flex-direction: column; gap: 20px"
+      >
+        <div class="row" style="justify-content: space-between">
+          <span class="note" id="g-player"></span>
+          <span
+            class="note"
+            id="g-score"
+            style="font-variant-numeric: tabular-nums"
+          ></span>
+        </div>
+        <div class="door">
+          <span class="num" id="g-num"></span>
+          <p class="fact" id="g-fact"></p>
+          <div class="row" style="justify-content: center; margin-top: 6px">
+            <button
+              class="heart"
+              id="g-heart"
+              type="button"
+              aria-pressed="false"
+            >
+              <span class="h">♥</span
+              ><span id="g-heart-lbl">Favourite fact</span>
+            </button>
+          </div>
+        </div>
+
+        <form class="card" id="g-form" hidden novalidate>
+          <div class="combo">
+            <label for="guess">Who said it?</label>
+            <input
+              id="guess"
+              type="text"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="opts"
+              placeholder="Start typing a name"
+            />
+            <ul id="opts" role="listbox" hidden></ul>
+          </div>
+          <button
+            class="btn gold big wide"
+            id="g-submit"
+            type="submit"
+            disabled
+          >
+            Lock in my guess
+          </button>
+          <p class="note">
+            One guess per fact. Once it's locked in, it can't be changed.
+          </p>
+          <span class="status" id="g-status" role="status"></span>
+        </form>
+
+        <div class="locked" id="g-locked" hidden>
+          <span class="lbl" id="g-locked-lbl">Your guess</span>
+          <span class="val" id="g-mine"></span>
+          <span class="note" id="g-locked-note"></span>
+        </div>
+
+        <section class="card" id="g-results" hidden aria-live="polite">
+          <h2 style="font-size: 22px">Top 3 guesses</h2>
+          <div class="podium" id="g-podium"></div>
+          <div
+            id="g-answer"
+            hidden
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+              border-top: 1.5px solid var(--line);
+              padding-top: 16px;
+              text-align: center;
+            "
+          >
+            <span class="note">The door belongs to…</span>
+            <span class="reveal-name" id="g-answer-name"></span>
+            <span class="verdict" id="g-verdict"></span>
+          </div>
+        </section>
+      </section>
+
+      <!-- done -->
+      <section
+        id="s-done"
+        hidden
+        style="display: flex; flex-direction: column; gap: 20px"
+      >
+        <div class="card gold" style="text-align: center">
+          <h2 style="font-size: 30px; color: var(--candle)">That's a wrap!</h2>
+          <p class="note">The host has ended the game. Thanks for playing!</p>
+          <p class="verdict" id="d-score"></p>
+        </div>
+        <div class="card">
+          <h2 style="font-size: 22px">Best guessers</h2>
+          <div id="d-leader"></div>
+        </div>
+        <div class="card">
+          <h2 style="font-size: 22px">Favourite facts</h2>
+          <div id="d-favs"></div>
+        </div>
+      </section>
     </div>
-  </section>
 
-  <!-- game -->
-  <section id="s-game" hidden style="display:flex;flex-direction:column;gap:20px">
-    <div class="row" style="justify-content:space-between">
-      <span class="note" id="g-player"></span>
-      <span class="note" id="g-score" style="font-variant-numeric:tabular-nums"></span>
-    </div>
-    <div class="door">
-      <span class="num" id="g-num"></span>
-      <p class="fact" id="g-fact"></p>
-      <div class="row" style="justify-content:center;margin-top:6px">
-        <button class="heart" id="g-heart" type="button" aria-pressed="false"><span class="h">♥</span><span id="g-heart-lbl">Favourite fact</span></button>
-      </div>
-    </div>
+    <script type="module">
+      import {
+        connect,
+        $,
+        esc,
+        norm,
+        isLocal,
+        butterflies,
+        podiumHTML,
+        leaderboardHTML,
+        favsHTML,
+        combobox,
+      } from "./common.js";
+      butterflies(8);
 
-    <form class="card" id="g-form" hidden novalidate>
-      <div class="combo">
-        <label for="guess">Who said it?</label>
-        <input id="guess" type="text" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="opts" placeholder="Start typing a name">
-        <ul id="opts" role="listbox" hidden></ul>
-      </div>
-      <button class="btn gold big wide" id="g-submit" type="submit" disabled>Lock in my guess</button>
-      <p class="note">One guess per fact. Once it's locked in, it can't be changed.</p>
-      <span class="status" id="g-status" role="status"></span>
-    </form>
+      const store = (() => {
+        try {
+          return isLocal ? sessionStorage : localStorage;
+        } catch (_) {
+          return null;
+        }
+      })();
+      const remember = (k, v) => {
+        try {
+          v == null ? store.removeItem(k) : store.setItem(k, v);
+        } catch (_) {}
+      };
+      const recall = (k) => {
+        try {
+          return store.getItem(k);
+        } catch (_) {
+          return null;
+        }
+      };
 
-    <div class="locked" id="g-locked" hidden>
-      <span class="lbl" id="g-locked-lbl">Your guess</span>
-      <span class="val" id="g-mine"></span>
-      <span class="note" id="g-locked-note"></span>
-    </div>
+      let db,
+        game = null,
+        myName = recall("wst-name"),
+        mine = null,
+        liked = false,
+        subs = [],
+        curFact = null,
+        lastAnswerKey = null;
+      const show = (id) =>
+        ["s-connect", "s-join", "s-lobby", "s-ended", "s-game", "s-done"].forEach(
+          (s) => ($(s).hidden = s !== id),
+        );
 
-    <section class="card" id="g-results" hidden aria-live="polite">
-      <h2 style="font-size:22px">Top 3 guesses</h2>
-      <div class="podium" id="g-podium"></div>
-      <div id="g-answer" hidden style="display:flex;flex-direction:column;gap:6px;border-top:1.5px solid var(--line);padding-top:16px;text-align:center">
-        <span class="note">The door belongs to…</span>
-        <span class="reveal-name" id="g-answer-name"></span>
-        <span class="verdict" id="g-verdict"></span>
-      </div>
-    </section>
-  </section>
+      // ---------- join ----------
+      const me = $("me");
+      me.addEventListener("input", () => {
+        $("join-btn").disabled = !me.value.trim();
+      });
+      $("s-join").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const n = me.value.trim();
+        if (!n) return;
+        $("join-btn").disabled = true;
+        $("join-status").textContent = "Joining…";
+        $("join-status").className = "status";
+        try {
+          await db.set("players/" + db.uid, { name: n, joinedAt: Date.now() });
+          myName = n;
+          remember("wst-name", n);
+          render();
+        } catch (_) {
+          $("join-status").textContent =
+            "Couldn't join. Check your connection and try again.";
+          $("join-status").className = "status err";
+          $("join-btn").disabled = false;
+        }
+      });
+      $("rename").onclick = () => {
+        me.value = myName || "";
+        $("join-btn").disabled = !me.value.trim();
+        myName = null;
+        render();
+        me.focus();
+      };
 
-  <!-- done -->
-  <section id="s-done" hidden style="display:flex;flex-direction:column;gap:20px">
-    <div class="card gold" style="text-align:center">
-      <h2 style="font-size:30px;color:var(--candle)">That's a wrap!</h2>
-      <p class="verdict" id="d-score"></p>
-    </div>
-    <div class="card"><h2 style="font-size:22px">Best guessers</h2><div id="d-leader"></div></div>
-    <div class="card"><h2 style="font-size:22px">Favourite facts</h2><div id="d-favs"></div></div>
-  </section>
-</div>
+      // ---------- guess ----------
+      const guess = $("guess");
+      const names = () => (game && game.names) || [];
+      const canonical = (v) => names().find((n) => norm(n) === norm(v));
+      const validate = () => {
+        $("g-submit").disabled = !canonical(guess.value);
+        $("g-status").textContent = "";
+      };
+      const combo = combobox(guess, $("opts"), names, validate);
+      $("g-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const g = game,
+          n = canonical(guess.value);
+        if (!g || g.phase !== "guessing" || !n || mine) return;
+        $("g-submit").disabled = true;
+        $("g-status").textContent = "Locking in…";
+        $("g-status").className = "status";
+        const path = `guesses/${g.factId}/${db.uid}`;
+        try {
+          if (isLocal && (await db.get(path))) throw new Error("exists");
+          await db.set(path, { guess: n, by: myName || "", at: Date.now() });
+        } catch (_) {
+          $("g-status").className = "status err";
+          $("g-status").textContent =
+            "Guessing just closed, or you already guessed this one.";
+        }
+      });
 
-<script type="module">
-import { connect, $, esc, norm, isLocal, butterflies, podiumHTML, leaderboardHTML, favsHTML, combobox } from "./common.js";
-butterflies(8);
+      // ---------- favourite ----------
+      $("g-heart").onclick = async () => {
+        if (!game || !game.factId || game.phase === "done") return;
+        try {
+          await db.set(`likes/${game.factId}/${db.uid}`, liked ? null : true);
+        } catch (_) {}
+      };
 
-const store = (() => { try { return isLocal ? sessionStorage : localStorage; } catch (_) { return null; } })();
-const remember = (k, v) => { try { v == null ? store.removeItem(k) : store.setItem(k, v); } catch (_) {} };
-const recall = (k) => { try { return store.getItem(k); } catch (_) { return null; } };
+      function watchFact(fid) {
+        if (fid === curFact) return;
+        subs.forEach((u) => u());
+        subs = [];
+        curFact = fid;
+        mine = null;
+        liked = false;
+        guess.value = "";
+        combo.close();
+        validate();
+        if (!fid) return;
+        subs.push(
+          db.on(`guesses/${fid}/${db.uid}`, (v) => {
+            mine = v;
+            render();
+          }),
+        );
+        subs.push(
+          db.on(`likes/${fid}/${db.uid}`, (v) => {
+            liked = !!v;
+            render();
+          }),
+        );
+      }
 
-let db, game = null, myName = recall("wst-name"), mine = null, liked = false, subs = [], curFact = null, lastAnswerKey = null;
-const show = (id) => ["s-connect", "s-join", "s-lobby", "s-game", "s-done"].forEach(s => $(s).hidden = s !== id);
+      // ---------- render ----------
+      function render() {
+        const g = game;
+        if (!myName) {
+          show("s-join");
+          return;
+        }
+        if (!g || !g.phase || g.phase === "lobby" || g.phase === "intro") {
+          if (g && g.phase === "intro" && g.session)
+            remember("wst-session", g.session);
+          $("lobby-name").textContent = myName;
+          $("lobby-msg").innerHTML =
+            g && g.phase === "intro"
+              ? "<b>The game is about to begin!</b> The host is explaining the rules. Keep this page open."
+              : "<b>The game hasn't started yet.</b> Keep this page open. The first door opens when the host starts the game.";
+          show("s-lobby");
+          return;
+        }
+        if (g.phase === "done") {
+          if (!g.session || recall("wst-session") !== g.session) {
+            show("s-ended");
+            return;
+          }
+          show("s-done");
+          const sc = (g.scores && g.scores[db.uid]) || 0,
+            total = g.answered || 0;
+          $("d-score").textContent = `You got ${sc} of ${total} right.`;
+          $("d-leader").innerHTML = leaderboardHTML(
+            g.results && g.results.leaderboard,
+          );
+          $("d-favs").innerHTML = favsHTML(g.results && g.results.favs);
+          return;
+        }
+        if (g.session) remember("wst-session", g.session);
+        show("s-game");
+        watchFact(g.factId);
+        $("g-player").textContent = "Playing as " + myName;
+        $("g-score").textContent = g.answered
+          ? `Score: ${(g.scores && g.scores[db.uid]) || 0} of ${g.answered}`
+          : "";
+        $("g-num").textContent = `Door ${g.idx + 1} of ${g.total}`;
+        $("g-fact").textContent = g.text;
+        $("g-heart").setAttribute("aria-pressed", liked);
+        $("g-heart-lbl").textContent = liked
+          ? "One of your favourites"
+          : "Favourite fact";
 
-// ---------- join ----------
-const me = $("me");
-me.addEventListener("input", () => { $("join-btn").disabled = !me.value.trim(); });
-$("s-join").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const n = me.value.trim(); if (!n) return;
-  $("join-btn").disabled = true; $("join-status").textContent = "Joining…"; $("join-status").className = "status";
-  try {
-    await db.set("players/" + db.uid, { name: n, joinedAt: Date.now() });
-    myName = n; remember("wst-name", n); render();
-  } catch (_) { $("join-status").textContent = "Couldn't join. Check your connection and try again."; $("join-status").className = "status err"; $("join-btn").disabled = false; }
-});
-$("rename").onclick = () => { me.value = myName || ""; $("join-btn").disabled = !me.value.trim(); myName = null; render(); me.focus(); };
+        const open = g.phase === "guessing";
+        const canGuess = open && !mine;
+        $("g-form").hidden = !canGuess;
+        $("g-locked").hidden = canGuess;
+        if (!canGuess) {
+          $("g-locked-lbl").textContent = mine
+            ? "Your guess"
+            : "Guessing closed";
+          $("g-mine").textContent = mine ? mine.guess : "No guess this time";
+          $("g-locked-note").textContent = mine
+            ? open
+              ? "Locked in. Waiting for the host to reveal the guesses."
+              : "Locked in."
+            : "The host revealed the guesses before you locked one in.";
+        }
+        guess.disabled = !canGuess;
 
-// ---------- guess ----------
-const guess = $("guess");
-const names = () => (game && game.names) || [];
-const canonical = (v) => names().find(n => norm(n) === norm(v));
-const validate = () => { $("g-submit").disabled = !canonical(guess.value); $("g-status").textContent = ""; };
-const combo = combobox(guess, $("opts"), names, validate);
-$("g-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const g = game, n = canonical(guess.value);
-  if (!g || g.phase !== "guessing" || !n || mine) return;
-  $("g-submit").disabled = true; $("g-status").textContent = "Locking in…"; $("g-status").className = "status";
-  const path = `guesses/${g.factId}/${db.uid}`;
-  try {
-    if (isLocal && await db.get(path)) throw new Error("exists");
-    await db.set(path, { guess: n, by: myName || "", at: Date.now() });
-  } catch (_) {
-    $("g-status").className = "status err";
-    $("g-status").textContent = "Guessing just closed, or you already guessed this one.";
-  }
-});
+        const res = g.phase === "tally" || g.phase === "answer";
+        $("g-results").hidden = !res;
+        if (res) {
+          $("g-podium").innerHTML = podiumHTML(
+            g.top3,
+            g.phase === "answer" ? g.answer : null,
+            g.totalGuesses,
+          );
+          $("g-answer").hidden = g.phase !== "answer";
+          if (g.phase === "answer") {
+            const el = $("g-answer-name"),
+              key = g.factId + g.answer;
+            el.textContent = g.answer;
+            if (key !== lastAnswerKey) {
+              el.classList.remove("pop");
+              void el.offsetWidth;
+              el.classList.add("pop");
+              lastAnswerKey = key;
+            }
+            const v = $("g-verdict");
+            if (!mine) {
+              v.textContent = "You didn't guess this one.";
+              v.className = "verdict";
+            } else if (norm(mine.guess) === norm(g.answer)) {
+              v.textContent = "¡Sí! You got it!";
+              v.className = "verdict yes";
+            } else {
+              v.textContent = "Not this time.";
+              v.className = "verdict no";
+            }
+          }
+        }
+      }
 
-// ---------- favourite ----------
-$("g-heart").onclick = async () => {
-  if (!game || !game.factId || game.phase === "done") return;
-  try { await db.set(`likes/${game.factId}/${db.uid}`, liked ? null : true); } catch (_) {}
-};
-
-function watchFact(fid) {
-  if (fid === curFact) return;
-  subs.forEach(u => u()); subs = []; curFact = fid; mine = null; liked = false;
-  guess.value = ""; combo.close(); validate();
-  if (!fid) return;
-  subs.push(db.on(`guesses/${fid}/${db.uid}`, v => { mine = v; render(); }));
-  subs.push(db.on(`likes/${fid}/${db.uid}`, v => { liked = !!v; render(); }));
-}
-
-// ---------- render ----------
-function render() {
-  const g = game;
-  if (!myName) { show("s-join"); return; }
-  if (!g || !g.phase || g.phase === "lobby") { $("lobby-name").textContent = myName; show("s-lobby"); return; }
-  if (g.phase === "done") {
-    show("s-done");
-    const sc = (g.scores && g.scores[db.uid]) || 0, total = g.answered || 0;
-    $("d-score").textContent = `You got ${sc} of ${total} right.`;
-    $("d-leader").innerHTML = leaderboardHTML(g.results && g.results.leaderboard);
-    $("d-favs").innerHTML = favsHTML(g.results && g.results.favs);
-    return;
-  }
-  show("s-game");
-  watchFact(g.factId);
-  $("g-player").textContent = "Playing as " + myName;
-  $("g-score").textContent = g.answered ? `Score: ${(g.scores && g.scores[db.uid]) || 0} of ${g.answered}` : "";
-  $("g-num").textContent = `Door ${g.idx + 1} of ${g.total}`;
-  $("g-fact").textContent = g.text;
-  $("g-heart").setAttribute("aria-pressed", liked);
-  $("g-heart-lbl").textContent = liked ? "One of your favourites" : "Favourite fact";
-
-  const open = g.phase === "guessing";
-  const canGuess = open && !mine;
-  $("g-form").hidden = !canGuess;
-  $("g-locked").hidden = canGuess;
-  if (!canGuess) {
-    $("g-locked-lbl").textContent = mine ? "Your guess" : "Guessing closed";
-    $("g-mine").textContent = mine ? mine.guess : "No guess this time";
-    $("g-locked-note").textContent = mine
-      ? (open ? "Locked in. Waiting for the host to reveal the guesses." : "Locked in.")
-      : "The host revealed the guesses before you locked one in.";
-  }
-  guess.disabled = !canGuess;
-
-  const res = g.phase === "tally" || g.phase === "answer";
-  $("g-results").hidden = !res;
-  if (res) {
-    $("g-podium").innerHTML = podiumHTML(g.top3, g.phase === "answer" ? g.answer : null, g.totalGuesses);
-    $("g-answer").hidden = g.phase !== "answer";
-    if (g.phase === "answer") {
-      const el = $("g-answer-name"), key = g.factId + g.answer;
-      el.textContent = g.answer;
-      if (key !== lastAnswerKey) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); lastAnswerKey = key; }
-      const v = $("g-verdict");
-      if (!mine) { v.textContent = "You didn't guess this one."; v.className = "verdict"; }
-      else if (norm(mine.guess) === norm(g.answer)) { v.textContent = "¡Sí! You got it!"; v.className = "verdict yes"; }
-      else { v.textContent = "Not this time."; v.className = "verdict no"; }
-    }
-  }
-}
-
-// ---------- boot ----------
-(async () => {
-  const t = setTimeout(() => { $("connect-msg").textContent = "Still connecting… check your Wi-Fi."; }, 10000);
-  try { db = await connect("player"); }
-  catch (e) { clearTimeout(t); $("connect-msg").textContent = "Couldn't reach the game. Reload the page to try again."; return; }
-  clearTimeout(t);
-  if (myName) { try { await db.set("players/" + db.uid, { name: myName, joinedAt: Date.now() }); } catch (_) {} }
-  db.on("game", v => { game = v; render(); }, () => { $("connect-msg").textContent = "Lost the connection. Reload the page."; show("s-connect"); });
-  render();
-})();
-</script>
-</body>
+      // ---------- boot ----------
+      (async () => {
+        const t = setTimeout(() => {
+          $("connect-msg").textContent = "Still connecting… check your Wi-Fi.";
+        }, 10000);
+        try {
+          db = await connect("player");
+        } catch (e) {
+          clearTimeout(t);
+          $("connect-msg").textContent =
+            "Couldn't reach the game. Reload the page to try again.";
+          return;
+        }
+        clearTimeout(t);
+        if (myName) {
+          try {
+            await db.set("players/" + db.uid, {
+              name: myName,
+              joinedAt: Date.now(),
+            });
+          } catch (_) {}
+        }
+        db.on(
+          "game",
+          (v) => {
+            game = v;
+            render();
+          },
+          () => {
+            $("connect-msg").textContent =
+              "Lost the connection. Reload the page.";
+            show("s-connect");
+          },
+        );
+        render();
+      })();
+    </script>
+  </body>
 </html>

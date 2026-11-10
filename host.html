@@ -1,431 +1,1217 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Who Said That? Host</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Yeseva+One&display=swap">
-<link rel="stylesheet" href="styles.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<style>
-  .home { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); gap: clamp(24px, 4vw, 56px); align-items: center; min-height: calc(100vh - 140px); }
-  @media (max-width: 860px) { .home { grid-template-columns: 1fr; min-height: 0; } }
-  .home .title { font-size: clamp(56px, 9vw, 120px); }
-  .home .tagline { font-size: clamp(18px, 2vw, 24px); color: var(--muted); max-width: 32ch; }
-  .qrframe { background: #fff; border-radius: 22px; padding: 18px; border: 6px solid var(--gold); box-shadow: 0 0 0 8px rgba(245,184,61,.18), 0 0 70px rgba(245,184,61,.35); width: min(100%, 380px); margin-inline: auto; }
-  .qrframe svg { display: block; width: 100%; height: auto; }
-  .scan { text-align: center; font-family: var(--display); font-size: 28px; color: var(--candle); }
-  .url { text-align: center; font-weight: 800; font-size: 15px; color: var(--muted); overflow-wrap: anywhere; user-select: all; }
-  .joined { font-family: var(--display); font-size: 44px; color: var(--candle); line-height: 1; font-variant-numeric: tabular-nums; }
-  .topnav { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .stagegrid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr); gap: 28px; align-items: start; }
-  @media (max-width: 900px) { .stagegrid { grid-template-columns: 1fr; } }
-  .live { font-family: var(--display); font-size: 64px; line-height: 1; color: var(--candle); font-variant-numeric: tabular-nums; }
-  .phase { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; border: 1.5px solid var(--gold); color: var(--candle); border-radius: 999px; padding: 4px 12px; }
-  .phase i { width: 9px; height: 9px; border-radius: 50%; background: var(--good); box-shadow: 0 0 8px var(--good); }
-  .list { list-style: none; margin: 0; padding: 0; max-height: 460px; overflow-y: auto; }
-  .list li { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); align-items: start; }
-  .list li > div { min-width: 0; }
-  .list .who { font-size: 13px; color: var(--candle); font-weight: 800; }
-  .list .txt { overflow-wrap: anywhere; }
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
-  .results { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
-  @media (max-width: 860px) { .results { grid-template-columns: 1fr; } }
-  kbd { font: 800 12px var(--body); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; color: var(--candle); }
-</style>
-</head>
-<body>
-<div class="band"></div>
-<div class="wrap wide" id="wrap">
-
-  <!-- sign in (online mode only) -->
-  <form class="card gold" id="v-signin" hidden novalidate style="max-width:440px;margin:40px auto;width:100%">
-    <h2 style="font-size:28px;color:var(--candle)">Host sign-in</h2>
-    <p class="note">Only the organizer account set up in Firebase can run the game.</p>
-    <div><label for="em">Email</label><input id="em" type="email" autocomplete="username"></div>
-    <div><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"></div>
-    <button class="btn gold wide" type="submit">Sign in</button>
-    <span class="status" id="si-status" role="status"></span>
-  </form>
-
-  <!-- home / presentation -->
-  <section id="v-home" hidden style="display:flex;flex-direction:column;gap:20px">
-    <div class="topnav">
-      <span id="mode-flag"></span>
-      <div class="row">
-        <button class="btn small" id="go-setup">Manage facts</button>
-        <button class="btn small" id="fs">Full screen</button>
-      </div>
-    </div>
-    <div class="home">
-      <div style="display:flex;flex-direction:column;gap:22px">
-        <p class="eyebrow">Retreat · First morning</p>
-        <h1 class="title">Who Said <span class="q">That?</span></h1>
-        <p class="tagline">Everyone has a little magic nobody knows about. Behind each door is one surprising fact. Guess whose it is.</p>
-        <div class="row" style="gap:18px;align-items:flex-end">
-          <div><div class="joined" id="h-joined">0</div><div class="note" id="h-joined-lbl">players have joined</div></div>
-        </div>
-        <div class="chips" id="h-chips"></div>
-        <div class="row">
-          <button class="btn gold big" id="start">Start the game</button>
-          <button class="btn big" id="resume" hidden>Resume the game</button>
-          <button class="btn big" id="see-results" hidden>Show the results</button>
-        </div>
-        <p class="note" id="start-note"></p>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="qrframe" id="qr" role="img" aria-label="QR code for the player page"></div>
-        <p class="scan">Scan to play</p>
-        <p class="url" id="url"></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- setup -->
-  <section id="v-setup" hidden style="display:flex;flex-direction:column;gap:18px">
-    <div class="topnav">
-      <h2 style="font-size:32px;color:var(--candle)">Manage facts</h2>
-      <button class="btn small" id="setup-home">Back to home</button>
-    </div>
-    <div class="card">
-      <div class="row" style="justify-content:space-between">
-        <p><span class="joined" id="s-count" style="font-size:36px">0</span> <span class="note">facts behind doors</span></p>
-        <div class="row">
-          <button class="btn small" id="load-demo">Load demo data</button>
-          <button class="btn small" id="clear-demo">Remove demo data</button>
-          <button class="btn small" id="reset-players">Remove all players</button>
-        </div>
-      </div>
-      <p class="note">Demo data adds 25 made-up facts plus 14 made-up players who have already guessed and picked favourites, so the reveals have numbers in them.</p>
-      <span class="status" id="setup-status" role="status"></span>
-    </div>
-    <div class="grid2">
-      <form class="card" id="add" novalidate>
-        <h3 style="font-size:22px">Add a fact</h3>
-        <div><label for="a-name">Name</label><input id="a-name" type="text" maxlength="40"></div>
-        <div><label for="a-text">Fact</label><textarea id="a-text" maxlength="240"></textarea></div>
-        <div class="row"><button class="btn gold" type="submit">Add</button><span class="status" id="a-status" role="status"></span></div>
-      </form>
-      <form class="card" id="paste-form" novalidate>
-        <h3 style="font-size:22px">Paste submissions</h3>
-        <p class="note">One per line as <b>Name | fact</b> (what the submission page copies). Spreadsheet rows work too.</p>
-        <div><label for="paste">Submissions</label><textarea id="paste" placeholder="Priya Raman | I once…"></textarea></div>
-        <div class="row"><button class="btn gold" type="submit">Import</button><span class="status" id="p-status" role="status"></span></div>
-      </form>
-    </div>
-    <div class="card"><h3 style="font-size:22px">Facts (spoilers)</h3><ul class="list" id="list"></ul></div>
-  </section>
-
-  <!-- stage -->
-  <section id="v-stage" hidden style="display:flex;flex-direction:column;gap:20px">
-    <div class="topnav">
-      <div class="row"><span class="phase" id="phase"><i></i><span></span></span></div>
-      <div class="row">
-        <button class="btn small" id="stage-home">Home</button>
-        <button class="btn small" id="end">End game & show results</button>
-      </div>
-    </div>
-    <div class="stagegrid">
-      <div style="display:flex;flex-direction:column;gap:26px;min-width:0">
-        <div class="door"><span class="num" id="st-num"></span><p class="fact" id="st-fact"></p></div>
-        <section class="card" id="st-results" hidden aria-live="polite">
-          <h2 style="font-size:28px">Top 3 guesses</h2>
-          <div class="podium" id="st-podium"></div>
-          <div id="st-answer" hidden style="display:flex;flex-direction:column;gap:6px;border-top:1.5px solid var(--line);padding-top:18px;text-align:center">
-            <span class="note">The door belongs to…</span>
-            <span class="reveal-name" id="st-answer-name"></span>
-            <span class="note" id="st-answer-stat"></span>
-          </div>
-        </section>
-      </div>
-      <aside class="card gold">
-        <div class="row" style="justify-content:space-between;align-items:flex-end">
-          <div><div class="live" id="st-live">0</div><div class="note" id="st-live-lbl">guesses locked in</div></div>
-          <div style="text-align:right"><div class="live" id="st-hearts" style="font-size:40px;color:#ff9cc9">0</div><div class="note">♥ favourites</div></div>
-        </div>
-        <button class="btn gold big wide" id="rev-guess">Reveal guesses</button>
-        <button class="btn magenta big wide" id="rev-answer" disabled>Reveal answer</button>
-        <button class="btn big wide" id="next" disabled>Next door</button>
-        <span class="status" id="st-status" role="status"></span>
-        <p class="note">Revealing the guesses closes guessing on every phone. Keys: <kbd>G</kbd> guesses · <kbd>A</kbd> answer · <kbd>N</kbd> next</p>
-      </aside>
-    </div>
-  </section>
-
-  <!-- results -->
-  <section id="v-results" hidden style="display:flex;flex-direction:column;gap:22px">
-    <div class="topnav">
-      <h1 class="title" style="font-size:clamp(40px,6vw,72px)">And the magic goes to…</h1>
-      <button class="btn small" id="results-home">Home</button>
-    </div>
-    <div class="results">
-      <div class="card gold"><h2 style="font-size:30px">Top 5 guessers</h2><div id="r-leader"></div></div>
-      <div class="card"><h2 style="font-size:30px">Most loved facts</h2><div id="r-favs"></div></div>
-    </div>
-  </section>
-</div>
-
-<script type="module">
-import { connect, $, esc, norm, isLocal, butterflies, podiumHTML, leaderboardHTML, favsHTML, PLAYER_URL } from "./common.js";
-butterflies(12);
-
-const D = { facts: {}, players: {}, guesses: {}, likes: {}, host: null, game: null };
-let db, view = null, subs = [];
-const views = ["v-signin", "v-home", "v-setup", "v-stage", "v-results"];
-const show = (v) => { view = v; views.forEach(x => $(x).hidden = x !== "v-" + v); render(); };
-const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const factList = () => Object.entries(D.facts || {}).map(([id, f]) => ({ id, ...f })).filter(f => f && f.text && f.name);
-const status = (id, t, k) => { $(id).textContent = t || ""; $(id).className = "status" + (k ? " " + k : ""); };
-function twice(btn, label, run) {
-  if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = btn.dataset.orig; run(); return; }
-  btn.dataset.orig = btn.textContent; btn.dataset.armed = "1"; btn.textContent = label;
-  setTimeout(() => { if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = btn.dataset.orig; } }, 4000);
-}
-
-// ---------- QR ----------
-function drawQR() {
-  $("url").textContent = PLAYER_URL;
-  if (!window.qrcode) { $("qr").innerHTML = '<p style="color:#2a1742;text-align:center;padding:40px 0">QR code unavailable offline. Share the link below.</p>'; return; }
-  const qr = window.qrcode(0, "M"); qr.addData(PLAYER_URL); qr.make();
-  $("qr").innerHTML = qr.createSvgTag({ cellSize: 8, margin: 1, scalable: true });
-}
-
-// ---------- scoring ----------
-function guessesFor(fid) { return Object.entries(D.guesses?.[fid] || {}).map(([uid, g]) => ({ uid, ...g })).filter(g => g.guess); }
-function tally(fid) {
-  const c = {}; guessesFor(fid).forEach(g => { c[g.guess] = (c[g.guess] || 0) + 1; });
-  return Object.entries(c).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 3);
-}
-function scoresUpTo(order, upto) {
-  const s = {};
-  order.slice(0, upto).forEach(fid => {
-    const f = D.facts[fid]; if (!f) return;
-    guessesFor(fid).forEach(g => { if (norm(g.guess) === norm(f.name)) s[g.uid] = (s[g.uid] || 0) + 1; });
-  });
-  return s;
-}
-function leaderboard(scores) {
-  const rows = Object.entries(scores).map(([uid, correct]) => {
-    let name = D.players?.[uid]?.name;
-    if (!name) { for (const fid in D.guesses) { const g = D.guesses[fid]?.[uid]; if (g && g.by) { name = g.by; break; } } }
-    return { name: name || "Mystery guest", correct };
-  }).sort((a, b) => b.correct - a.correct || a.name.localeCompare(b.name));
-  let rank = 0, prev = null;
-  return rows.map((r, i) => { if (r.correct !== prev) { rank = i + 1; prev = r.correct; } return { ...r, rank }; }).slice(0, 5);
-}
-function favourites() {
-  return factList().map(f => ({ text: f.text, name: f.name, likes: Object.values(D.likes?.[f.id] || {}).filter(Boolean).length }))
-    .filter(f => f.likes > 0).sort((a, b) => b.likes - a.likes).slice(0, 3);
-}
-
-// ---------- game actions ----------
-const order = () => (D.host?.order || []).filter(id => D.facts[id]);
-function roundState(ord, i, prev) {
-  const f = D.facts[ord[i]];
-  return { phase: "guessing", factId: ord[i], idx: i, total: ord.length, text: f.text,
-    names: [...new Set(factList().map(x => x.name))].sort((a, b) => a.localeCompare(b)),
-    top3: null, totalGuesses: 0, answer: null, scores: prev?.scores || null, answered: prev?.answered || 0, results: null, at: Date.now() };
-}
-async function act(fn) { try { await fn(); status("st-status", ""); } catch (e) { status("st-status", "That didn't save. Check the connection and try again.", "err"); } }
-$("start").onclick = (e) => twice(e.currentTarget, "Click again to start", () => act(async () => {
-  const facts = factList(); if (!facts.length) return;
-  const up = {};
-  for (const fid in D.guesses) for (const uid in D.guesses[fid]) if (!uid.startsWith("demo-")) up[`guesses/${fid}/${uid}`] = null;
-  for (const fid in D.likes) for (const uid in D.likes[fid]) if (!uid.startsWith("demo-")) up[`likes/${fid}/${uid}`] = null;
-  if (Object.keys(up).length) await db.update(up);
-  const ord = shuffle(facts.map(f => f.id));
-  await db.set("host", { order: ord, startedAt: Date.now() });
-  D.host = { order: ord };
-  await db.set("game", roundState(ord, 0, null));
-  show("stage");
-}));
-$("rev-guess").onclick = () => act(async () => {
-  const g = D.game; if (g?.phase !== "guessing") return;
-  await db.update({ "game/phase": "tally", "game/top3": tally(g.factId), "game/totalGuesses": guessesFor(g.factId).length });
-});
-$("rev-answer").onclick = () => act(async () => {
-  const g = D.game; if (g?.phase !== "tally") return;
-  const f = D.facts[g.factId]; if (!f) { status("st-status", "This fact was removed.", "err"); return; }
-  const ord = order(), upto = ord.indexOf(g.factId) + 1;
-  await db.update({ "game/phase": "answer", "game/answer": f.name, "game/scores": scoresUpTo(ord, upto), "game/answered": upto });
-});
-async function finish() {
-  const g = D.game || {}, ord = order();
-  const upto = g.phase === "answer" ? ord.indexOf(g.factId) + 1 : Math.max(0, ord.indexOf(g.factId));
-  const scores = scoresUpTo(ord, upto);
-  await db.set("game", { phase: "done", scores, answered: upto, results: { leaderboard: leaderboard(scores), favs: favourites() }, at: Date.now() });
-  show("results");
-}
-$("next").onclick = () => act(async () => {
-  const g = D.game; if (g?.phase !== "answer") return;
-  const ord = order(), i = ord.indexOf(g.factId) + 1;
-  if (i <= 0 || i >= ord.length) return finish();
-  await db.set("game", roundState(ord, i, g));
-});
-$("end").onclick = (e) => twice(e.currentTarget, "Click again to end", () => act(finish));
-document.addEventListener("keydown", (e) => {
-  if (view !== "stage" || e.target.matches("input, textarea") || e.metaKey || e.ctrlKey) return;
-  const k = e.key.toLowerCase();
-  if (k === "g") $("rev-guess").click(); else if (k === "a") $("rev-answer").click(); else if (k === "n") $("next").click();
-});
-
-// ---------- navigation ----------
-$("go-setup").onclick = () => show("setup");
-$("setup-home").onclick = $("stage-home").onclick = $("results-home").onclick = () => show("home");
-$("resume").onclick = () => show("stage");
-$("see-results").onclick = () => show("results");
-$("fs").onclick = () => {
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  else document.documentElement.requestFullscreen?.().catch(() => {});
-};
-document.addEventListener("fullscreenchange", () => { $("fs").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; });
-
-// ---------- setup ----------
-const newId = () => "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-$("add").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const n = $("a-name").value.trim(), t = $("a-text").value.trim();
-  if (!n || !t) { status("a-status", "Fill in both the name and the fact.", "err"); return; }
-  try { await db.set("facts/" + newId(), { name: n, text: t }); $("a-name").value = $("a-text").value = ""; status("a-status", "Added " + n, "ok"); }
-  catch (_) { status("a-status", "Couldn't add it. Try again.", "err"); }
-});
-function parse(raw) {
-  const out = [];
-  raw.split(/\r?\n/).forEach(line => {
-    line = line.trim(); if (!line) return;
-    let p;
-    if (line.includes("\t")) p = line.split("\t");
-    else if (line.includes("|")) { const i = line.indexOf("|"); p = [line.slice(0, i), line.slice(i + 1)]; }
-    else { const i = line.indexOf(":"); p = i > 0 ? [line.slice(0, i), line.slice(i + 1)] : null; }
-    if (p && p[0].trim() && p.slice(1).join(" ").trim()) out.push({ name: p[0].trim(), text: p.slice(1).join(" ").trim() });
-  });
-  return out;
-}
-$("paste-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const rows = parse($("paste").value);
-  if (!rows.length) { status("p-status", "No lines matched Name | fact.", "err"); return; }
-  const up = {}; rows.forEach(r => { up["facts/" + newId() + Math.random().toString(36).slice(2, 4)] = r; });
-  try { await db.update(up); $("paste").value = ""; status("p-status", `Imported ${rows.length}`, "ok"); }
-  catch (_) { status("p-status", "Couldn't import. Try again.", "err"); }
-});
-$("list").addEventListener("click", (e) => {
-  const b = e.target.closest("button[data-id]"); if (!b) return;
-  twice(b, "Confirm", async () => { try { await db.set("facts/" + b.dataset.id, null); } catch (_) {} });
-});
-const DEMO = [["Maya Okafor","I once got stuck in an elevator with a famous chef and we swapped pancake recipes for two hours."],["Tom Lindqvist","I can solve a Rubik's cube in under 40 seconds, but only with my eyes closed."],["Aisha Rahman","I was an extra in a Bollywood dance scene and still know every step."],["Diego Ferreira","I have a pet tortoise named Usain who is older than my parents."],["Hannah Weiss","I hold my hometown's record for the longest hula-hoop session: 3 hours, 12 minutes."],["Kenji Watanabe","I accidentally joined a marathon in Lisbon while looking for a coffee shop and finished it."],["Sofia Marchetti","I trained as an opera singer for six years before switching to engineering."],["Liam O'Connor","I've visited 41 countries but have never seen snow."],["Priya Nair","I can name every country's capital alphabetically in under two minutes."],["Oluwaseun Adeyemi","I built a working go-kart out of an old lawnmower when I was 12."],["Emma Johansson","I was once a professional cheese taster for a summer in Switzerland."],["Rafael Ortiz","I've been struck by lightning. Mildly, but it still counts."],["Chloe Dubois","I speak fluent Klingon thanks to a very nerdy summer camp."],["Arjun Mehta","I won a regional yo-yo championship at age 15."],["Zara Ahmed","I once delivered a baby goat on a farm stay in Wales."],["Noah Fischer","I have a collection of more than 300 rubber ducks from around the world."],["Isabella Rossi","I can juggle five balls while riding a unicycle."],["Daniel Kim","I appeared on a TV quiz show and lost on a question about my own hometown."],["Fatima Haddad","I've climbed Mount Kilimanjaro twice, once in borrowed hiking boots."],["Lucas Moreau","I taught myself to bake sourdough and now supply bread to my whole street."],["Grace Mwangi","I was the voice of a cartoon squirrel in a local radio ad."],["Mateo Silva","I can whistle any tune backwards."],["Yuki Tanaka","I once accidentally became the captain of a dragon boat team."],["Ben Carter","I've read every Agatha Christie novel and guessed the killer only twice."],["Leila Hosseini","I used to keep bees on the roof of my apartment building in the city."]];
-$("load-demo").onclick = async () => {
-  const up = {}, names = DEMO.map(d => d[0]);
-  const love = DEMO.map(() => Math.pow(Math.random(), 2.2));
-  DEMO.forEach(([name, text], i) => { up[`facts/demo${String(i + 1).padStart(2, "0")}`] = { name, text, demo: true }; });
-  for (let p = 1; p <= 14; p++) {
-    const uid = "demo-" + String(p).padStart(2, "0"), me = names[(p * 7) % names.length], skill = .25 + Math.random() * .45;
-    up["players/" + uid] = { name: me, joinedAt: Date.now(), demo: true };
-    DEMO.forEach((_, i) => {
-      const fid = `demo${String(i + 1).padStart(2, "0")}`, r = Math.random();
-      const decoy = names[(i * 5 + (r < .8 ? 3 : p)) % names.length];
-      up[`guesses/${fid}/${uid}`] = { guess: r < skill ? names[i] : decoy, by: me, at: Date.now() };
-      if (Math.random() < love[i]) up[`likes/${fid}/${uid}`] = true;
-    });
-  }
-  try { await db.update(up); status("setup-status", "Demo data loaded: 25 facts and 14 demo players.", "ok"); }
-  catch (_) { status("setup-status", "Couldn't load the demo data.", "err"); }
-};
-$("clear-demo").onclick = (e) => twice(e.currentTarget, "Click again to remove", async () => {
-  const up = {};
-  for (const id in D.facts) if (D.facts[id]?.demo) { up["facts/" + id] = null; up["guesses/" + id] = null; up["likes/" + id] = null; }
-  for (const uid in D.players) if (uid.startsWith("demo-")) up["players/" + uid] = null;
-  for (const fid in D.guesses) for (const uid in D.guesses[fid]) if (uid.startsWith("demo-")) up[`guesses/${fid}/${uid}`] = null;
-  for (const fid in D.likes) for (const uid in D.likes[fid]) if (uid.startsWith("demo-")) up[`likes/${fid}/${uid}`] = null;
-  try { if (Object.keys(up).length) await db.update(up); status("setup-status", "Demo data removed.", "ok"); } catch (_) { status("setup-status", "Couldn't remove the demo data.", "err"); }
-});
-$("reset-players").onclick = (e) => twice(e.currentTarget, "Click again to remove everyone", async () => {
-  try { await db.set("players", null); status("setup-status", "Players removed. Anyone with the page open joins again when they reload it.", "ok"); }
-  catch (_) { status("setup-status", "Couldn't remove the players.", "err"); }
-});
-
-// ---------- render ----------
-let seenPlayers = new Set();
-function render() {
-  const g = D.game || {};
-  const inGame = ["guessing", "tally", "answer"].includes(g.phase);
-  if (view === "home") {
-    const ps = Object.entries(D.players || {}).map(([uid, p]) => ({ uid, ...p })).filter(p => p.name).sort((a, b) => (b.joinedAt || 0) - (a.joinedAt || 0));
-    $("h-joined").textContent = ps.length;
-    $("h-joined-lbl").textContent = ps.length === 1 ? "player has joined" : "players have joined";
-    $("h-chips").innerHTML = ps.slice(0, 40).map(p => `<span class="chip${seenPlayers.has(p.uid) ? "" : " new"}">${esc(p.name)}</span>`).join("") + (ps.length > 40 ? `<span class="chip">+${ps.length - 40} more</span>` : "");
-    ps.forEach(p => seenPlayers.add(p.uid));
-    const n = factList().length;
-    $("start").textContent = inGame || g.phase === "done" ? "Start a new game" : "Start the game";
-    $("start").disabled = n === 0;
-    $("resume").hidden = !inGame;
-    $("see-results").hidden = g.phase !== "done";
-    $("start-note").textContent = n === 0 ? "Add some facts first under Manage facts." : `${n} doors ready. Starting shuffles them and clears guesses from earlier games.`;
-    $("mode-flag").innerHTML = isLocal ? '<span class="demo-flag">Local demo mode</span> <span class="note">Open the player link in other tabs of this browser to play along.</span>' : "";
-  }
-  if (view === "setup") {
-    const fs = factList().sort((a, b) => a.name.localeCompare(b.name));
-    $("s-count").textContent = fs.length;
-    $("list").innerHTML = fs.length ? fs.map(f => `<li><div><div class="who">${esc(f.name)}${f.demo ? " · demo" : ""}</div><div class="txt">${esc(f.text)}</div></div><button class="btn small" data-id="${esc(f.id)}">Remove</button></li>`).join("")
-      : '<li style="display:block"><p class="note" style="padding:16px 0;text-align:center">No facts yet. Add one, paste a batch, or load the demo data.</p></li>';
-  }
-  if (view === "stage") {
-    if (!inGame) { show(g.phase === "done" ? "results" : "home"); return; }
-    const labels = { guessing: "Guessing open", tally: "Guesses revealed", answer: "Answer revealed" };
-    $("phase").querySelector("span").textContent = labels[g.phase];
-    $("phase").querySelector("i").style.background = g.phase === "guessing" ? "var(--good)" : "var(--muted)";
-    $("st-num").textContent = `Door ${g.idx + 1} of ${g.total}`;
-    $("st-fact").textContent = g.text;
-    const n = guessesFor(g.factId).length, players = Object.keys(D.players || {}).length;
-    $("st-live").textContent = n;
-    $("st-live-lbl").textContent = `of ${players} ${players === 1 ? "player" : "players"} locked in`;
-    $("st-hearts").textContent = Object.values(D.likes?.[g.factId] || {}).filter(Boolean).length;
-    $("rev-guess").disabled = g.phase !== "guessing";
-    $("rev-answer").disabled = g.phase !== "tally";
-    $("next").disabled = g.phase !== "answer";
-    $("next").textContent = g.idx + 1 >= g.total ? "Finish & show results" : "Next door";
-    const res = g.phase !== "guessing";
-    $("st-results").hidden = !res;
-    if (res) {
-      $("st-podium").innerHTML = podiumHTML(g.top3, g.phase === "answer" ? g.answer : null, g.totalGuesses);
-      $("st-answer").hidden = g.phase !== "answer";
-      if (g.phase === "answer") {
-        $("st-answer-name").textContent = g.answer;
-        const right = guessesFor(g.factId).filter(x => norm(x.guess) === norm(g.answer)).length;
-        $("st-answer-stat").textContent = `${right} of ${g.totalGuesses || 0} guessed right`;
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Who Said That? Host</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Yeseva+One&display=swap"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <style>
+      .home {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+        gap: clamp(24px, 4vw, 56px);
+        align-items: center;
+        min-height: calc(100vh - 140px);
       }
-    }
-  }
-  if (view === "results") {
-    $("r-leader").innerHTML = leaderboardHTML(g.results?.leaderboard);
-    $("r-favs").innerHTML = favsHTML(g.results?.favs);
-  }
-}
+      @media (max-width: 860px) {
+        .home {
+          grid-template-columns: 1fr;
+          min-height: 0;
+        }
+      }
+      .home .title {
+        font-size: clamp(56px, 9vw, 120px);
+      }
+      .home .tagline {
+        font-size: clamp(18px, 2vw, 24px);
+        color: var(--muted);
+        max-width: 32ch;
+      }
+      .qrframe {
+        background: #fff;
+        border-radius: 22px;
+        padding: 18px;
+        border: 6px solid var(--gold);
+        box-shadow:
+          0 0 0 8px rgba(245, 184, 61, 0.18),
+          0 0 70px rgba(245, 184, 61, 0.35);
+        width: min(100%, 380px);
+        margin-inline: auto;
+      }
+      .qrframe svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .scan {
+        text-align: center;
+        font-family: var(--display);
+        font-size: 28px;
+        color: var(--candle);
+      }
+      .url {
+        text-align: center;
+        font-weight: 800;
+        font-size: 15px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+        user-select: all;
+      }
+      .joined {
+        font-family: var(--display);
+        font-size: 44px;
+        color: var(--candle);
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .topnav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .stagegrid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) {
+        .stagegrid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .live {
+        font-family: var(--display);
+        font-size: 64px;
+        line-height: 1;
+        color: var(--candle);
+        font-variant-numeric: tabular-nums;
+      }
+      .phase {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        border: 1.5px solid var(--gold);
+        color: var(--candle);
+        border-radius: 999px;
+        padding: 4px 12px;
+      }
+      .phase i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--good);
+        box-shadow: 0 0 8px var(--good);
+      }
+      .list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-height: 460px;
+        overflow-y: auto;
+      }
+      .list li {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+        align-items: start;
+      }
+      .list li > div {
+        min-width: 0;
+      }
+      .list .who {
+        font-size: 13px;
+        color: var(--candle);
+        font-weight: 800;
+      }
+      .list .txt {
+        overflow-wrap: anywhere;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 18px;
+      }
+      .results {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 24px;
+      }
+      @media (max-width: 860px) {
+        .results {
+          grid-template-columns: 1fr;
+        }
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+      }
+      .step {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 16px;
+        font-size: clamp(16px, 1.6vw, 22px);
+      }
+      .step p {
+        margin: 0;
+      }
+      .step .n {
+        font-family: var(--display);
+        font-size: 44px;
+        line-height: 1;
+        color: var(--candle);
+      }
+      kbd {
+        font: 800 12px var(--body);
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 6px;
+        padding: 1px 6px;
+        color: var(--candle);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="band"></div>
+    <div class="wrap wide" id="wrap">
+      <!-- sign in (online mode only) -->
+      <form
+        class="card gold"
+        id="v-signin"
+        hidden
+        novalidate
+        style="max-width: 440px; margin: 40px auto; width: 100%"
+      >
+        <h2 style="font-size: 28px; color: var(--candle)">Host sign-in</h2>
+        <p class="note">
+          Only the organizer account set up in Firebase can run the game.
+        </p>
+        <div>
+          <label for="em">Email</label
+          ><input id="em" type="email" autocomplete="username" />
+        </div>
+        <div>
+          <label for="pw">Password</label
+          ><input id="pw" type="password" autocomplete="current-password" />
+        </div>
+        <button class="btn gold wide" type="submit">Sign in</button>
+        <span class="status" id="si-status" role="status"></span>
+      </form>
 
-// ---------- boot ----------
-function subscribe() {
-  subs.forEach(u => u()); subs = [];
-  const onErr = () => { status("setup-status", "This account can't read the game data. Check the admin UID in your database rules.", "err"); };
-  for (const k of ["facts", "players", "guesses", "likes", "host"]) subs.push(db.on(k, v => { D[k] = v || (k === "host" ? null : {}); render(); }, onErr));
-  let first = true;
-  subs.push(db.on("game", v => {
-    const was = D.game?.phase; D.game = v;
-    if (first) { first = false; const p = v?.phase; show(["guessing", "tally", "answer"].includes(p) ? "stage" : p === "done" ? "results" : "home"); return; }
-    if (v?.phase === "done" && was !== "done" && view === "stage") show("results"); else render();
-  }, onErr));
-}
-$("v-signin").addEventListener("submit", async (e) => {
-  e.preventDefault(); status("si-status", "Signing in…");
-  try { await db.signIn($("em").value.trim(), $("pw").value); subscribe(); }
-  catch (_) { status("si-status", "That email and password didn't work.", "err"); }
-});
-(async () => {
-  drawQR();
-  db = await connect("host");
-  if (!db.isAdmin) { show("signin"); return; }
-  subscribe();
-})();
-</script>
-</body>
+      <!-- home / presentation -->
+      <section
+        id="v-home"
+        hidden
+        style="display: flex; flex-direction: column; gap: 20px"
+      >
+        <div class="topnav">
+          <span id="mode-flag"></span>
+          <div class="row">
+            <button class="btn small" id="go-setup">Manage facts</button>
+            <button class="btn small" id="fs">Full screen</button>
+          </div>
+        </div>
+        <div class="home">
+          <div style="display: flex; flex-direction: column; gap: 22px">
+            <p class="eyebrow">Getting to know each other</p>
+            <h1 class="title">Who Said <span class="q">That?</span></h1>
+            <p class="tagline">
+              Everyone has a little magic nobody knows about. Behind each door
+              is one surprising fact. Guess whose it is.
+            </p>
+            <div class="row" style="gap: 18px; align-items: flex-end">
+              <div>
+                <div class="joined" id="h-joined">0</div>
+                <div class="note" id="h-joined-lbl">players have joined</div>
+              </div>
+            </div>
+            <div class="chips" id="h-chips"></div>
+            <div class="row">
+              <button class="btn gold big" id="start">Start the game</button>
+              <button class="btn big" id="resume" hidden>
+                Resume the game
+              </button>
+              <button class="btn big" id="see-results" hidden>
+                Show the results
+              </button>
+            </div>
+            <p class="note" id="start-note"></p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div
+              class="qrframe"
+              id="qr"
+              role="img"
+              aria-label="QR code for the player page"
+            ></div>
+            <p class="scan">Scan to play</p>
+            <p class="url" id="url"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- setup -->
+      <section
+        id="v-setup"
+        hidden
+        style="display: flex; flex-direction: column; gap: 18px"
+      >
+        <div class="topnav">
+          <h2 style="font-size: 32px; color: var(--candle)">Manage facts</h2>
+          <button class="btn small" id="setup-home">Back to home</button>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content: space-between">
+            <p>
+              <span class="joined" id="s-count" style="font-size: 36px">0</span>
+              <span class="note">facts behind doors</span>
+            </p>
+            <div class="row">
+              <button class="btn small" id="load-demo">Load demo data</button>
+              <button class="btn small" id="clear-demo">
+                Remove demo data
+              </button>
+              <button class="btn small" id="reset-players">
+                Remove all players
+              </button>
+            </div>
+          </div>
+          <p class="note">
+            Demo data adds 15 made-up facts plus 15 made-up players who have
+            already guessed and picked favourites, so the reveals have numbers
+            in them.
+          </p>
+          <span class="status" id="setup-status" role="status"></span>
+        </div>
+        <div class="grid2">
+          <form class="card" id="add" novalidate>
+            <h3 style="font-size: 22px">Add a fact</h3>
+            <div>
+              <label for="a-name">Name</label
+              ><input id="a-name" type="text" maxlength="40" />
+            </div>
+            <div>
+              <label for="a-text">Fact</label
+              ><textarea id="a-text" maxlength="240"></textarea>
+            </div>
+            <div class="row">
+              <button class="btn gold" type="submit">Add</button
+              ><span class="status" id="a-status" role="status"></span>
+            </div>
+          </form>
+          <form class="card" id="paste-form" novalidate>
+            <h3 style="font-size: 22px">Paste submissions</h3>
+            <p class="note">
+              One per line as <b>Name | fact</b> (what the submission page
+              copies). Spreadsheet rows work too.
+            </p>
+            <div>
+              <label for="paste">Submissions</label
+              ><textarea
+                id="paste"
+                placeholder="Priya Raman | I once…"
+              ></textarea>
+            </div>
+            <div class="row">
+              <button class="btn gold" type="submit">Import</button
+              ><span class="status" id="p-status" role="status"></span>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content: space-between">
+            <h3 style="font-size: 22px">Facts (spoilers)</h3>
+            <button class="btn small" id="reveal-facts">Show facts</button>
+          </div>
+          <p class="note" id="facts-hidden-note">
+            The facts are hidden so you don't spoil the game by accident.
+          </p>
+          <ul class="list" id="list" hidden></ul>
+        </div>
+      </section>
+
+      <!-- intro / instructions -->
+      <section
+        id="v-intro"
+        hidden
+        style="display: flex; flex-direction: column; gap: 22px"
+      >
+        <div class="topnav">
+          <h1 class="title" style="font-size: clamp(40px, 6vw, 72px)">
+            How to play
+          </h1>
+          <button class="btn small" id="intro-home">Home</button>
+        </div>
+        <div class="steps">
+          <div class="card step"><span class="n">1</span><p><b>Read the fact.</b> Each door shows one surprising fact about someone in the room.</p></div>
+          <div class="card step"><span class="n">2</span><p><b>Type a name.</b> Start typing and a dropdown of names appears. Pick the one you think said it.</p></div>
+          <div class="card step"><span class="n">3</span><p><b>Lock it in.</b> Press <b>Lock in my guess</b> to actually submit. Nothing counts until you lock it, and it can't be changed.</p></div>
+          <div class="card step"><span class="n">4</span><p><b>Pick your favourites.</b> Tap the <b>♥ Favourite fact</b> button to mark a fact you love. Tap again to unmark it.</p></div>
+        </div>
+        <div class="row">
+          <button class="btn gold big" id="open-first">Open the first door</button>
+          <span class="note" id="intro-players"></span>
+          <span class="status" id="intro-status" role="status"></span>
+        </div>
+      </section>
+
+      <!-- stage -->
+      <section
+        id="v-stage"
+        hidden
+        style="display: flex; flex-direction: column; gap: 20px"
+      >
+        <div class="topnav">
+          <div class="row">
+            <span class="phase" id="phase"><i></i><span></span></span>
+          </div>
+          <div class="row">
+            <button class="btn small" id="stage-home">Home</button>
+            <button class="btn small" id="end">End game & show results</button>
+          </div>
+        </div>
+        <div class="stagegrid">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 26px;
+              min-width: 0;
+            "
+          >
+            <div class="door">
+              <span class="num" id="st-num"></span>
+              <p class="fact" id="st-fact"></p>
+            </div>
+            <section class="card" id="st-results" hidden aria-live="polite">
+              <h2 style="font-size: 28px">Top 3 guesses</h2>
+              <div class="podium" id="st-podium"></div>
+              <div
+                id="st-answer"
+                hidden
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  border-top: 1.5px solid var(--line);
+                  padding-top: 18px;
+                  text-align: center;
+                "
+              >
+                <span class="note">The door belongs to…</span>
+                <span class="reveal-name" id="st-answer-name"></span>
+                <span class="note" id="st-answer-stat"></span>
+              </div>
+            </section>
+          </div>
+          <aside class="card gold">
+            <div
+              class="row"
+              style="justify-content: space-between; align-items: flex-end"
+            >
+              <div>
+                <div class="live" id="st-live">0</div>
+                <div class="note" id="st-live-lbl">guesses locked in</div>
+              </div>
+              <div style="text-align: right">
+                <div
+                  class="live"
+                  id="st-hearts"
+                  style="font-size: 40px; color: #ff9cc9"
+                >
+                  0
+                </div>
+                <div class="note">♥ favourites</div>
+              </div>
+            </div>
+            <button class="btn gold big wide" id="rev-guess">
+              Reveal guesses
+            </button>
+            <button class="btn magenta big wide" id="rev-answer" disabled>
+              Reveal answer
+            </button>
+            <button class="btn big wide" id="next" disabled>Next door</button>
+            <span class="status" id="st-status" role="status"></span>
+            <p class="note">
+              Revealing the guesses closes guessing on every phone. Keys:
+              <kbd>G</kbd> guesses · <kbd>A</kbd> answer · <kbd>N</kbd> next
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- results -->
+      <section
+        id="v-results"
+        hidden
+        style="display: flex; flex-direction: column; gap: 22px"
+      >
+        <div class="topnav">
+          <h1 class="title" style="font-size: clamp(40px, 6vw, 72px)">
+            And the magic goes to…
+          </h1>
+          <button class="btn small" id="results-home">Home</button>
+        </div>
+        <div class="results">
+          <div class="card gold">
+            <h2 style="font-size: 30px">Top 5 guessers</h2>
+            <div id="r-leader"></div>
+          </div>
+          <div class="card">
+            <h2 style="font-size: 30px">Most loved facts</h2>
+            <div id="r-favs"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script type="module">
+      import {
+        connect,
+        $,
+        esc,
+        norm,
+        isLocal,
+        butterflies,
+        podiumHTML,
+        leaderboardHTML,
+        favsHTML,
+        PLAYER_URL,
+      } from "./common.js";
+      butterflies(12);
+
+      const D = {
+        facts: {},
+        players: {},
+        guesses: {},
+        likes: {},
+        host: null,
+        game: null,
+      };
+      let factsRevealed = false;
+      let db,
+        view = null,
+        subs = [];
+      const views = ["v-signin", "v-home", "v-setup", "v-intro", "v-stage", "v-results"];
+      const show = (v) => {
+        view = v;
+        views.forEach((x) => ($(x).hidden = x !== "v-" + v));
+        render();
+      };
+      const shuffle = (a) => {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      };
+      const factList = () =>
+        Object.entries(D.facts || {})
+          .map(([id, f]) => ({ id, ...f }))
+          .filter((f) => f && f.text && f.name);
+      const status = (id, t, k) => {
+        $(id).textContent = t || "";
+        $(id).className = "status" + (k ? " " + k : "");
+      };
+      function twice(btn, label, run) {
+        if (btn.dataset.armed) {
+          delete btn.dataset.armed;
+          btn.textContent = btn.dataset.orig;
+          run();
+          return;
+        }
+        btn.dataset.orig = btn.textContent;
+        btn.dataset.armed = "1";
+        btn.textContent = label;
+        setTimeout(() => {
+          if (btn.dataset.armed) {
+            delete btn.dataset.armed;
+            btn.textContent = btn.dataset.orig;
+          }
+        }, 4000);
+      }
+
+      // ---------- QR ----------
+      function drawQR() {
+        $("url").textContent = PLAYER_URL;
+        if (!window.qrcode) {
+          $("qr").innerHTML =
+            '<p style="color:#2a1742;text-align:center;padding:40px 0">QR code unavailable offline. Share the link below.</p>';
+          return;
+        }
+        const qr = window.qrcode(0, "M");
+        qr.addData(PLAYER_URL);
+        qr.make();
+        $("qr").innerHTML = qr.createSvgTag({
+          cellSize: 8,
+          margin: 1,
+          scalable: true,
+        });
+      }
+
+      // ---------- scoring ----------
+      function guessesFor(fid) {
+        return Object.entries(D.guesses?.[fid] || {})
+          .map(([uid, g]) => ({ uid, ...g }))
+          .filter((g) => g.guess);
+      }
+      function tally(fid) {
+        const c = {};
+        guessesFor(fid).forEach((g) => {
+          c[g.guess] = (c[g.guess] || 0) + 1;
+        });
+        return Object.entries(c)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+          .slice(0, 3);
+      }
+      function scoresUpTo(order, upto) {
+        const s = {};
+        order.slice(0, upto).forEach((fid) => {
+          const f = D.facts[fid];
+          if (!f) return;
+          guessesFor(fid).forEach((g) => {
+            if (norm(g.guess) === norm(f.name)) s[g.uid] = (s[g.uid] || 0) + 1;
+          });
+        });
+        return s;
+      }
+      function leaderboard(scores) {
+        const rows = Object.entries(scores)
+          .map(([uid, correct]) => {
+            let name = D.players?.[uid]?.name;
+            if (!name) {
+              for (const fid in D.guesses) {
+                const g = D.guesses[fid]?.[uid];
+                if (g && g.by) {
+                  name = g.by;
+                  break;
+                }
+              }
+            }
+            return { name: name || "Mystery guest", correct };
+          })
+          .sort(
+            (a, b) => b.correct - a.correct || a.name.localeCompare(b.name),
+          );
+        let rank = 0,
+          prev = null;
+        return rows
+          .map((r, i) => {
+            if (r.correct !== prev) {
+              rank = i + 1;
+              prev = r.correct;
+            }
+            return { ...r, rank };
+          })
+          .slice(0, 5);
+      }
+      function favourites() {
+        return factList()
+          .map((f) => ({
+            text: f.text,
+            name: f.name,
+            likes: Object.values(D.likes?.[f.id] || {}).filter(Boolean).length,
+          }))
+          .filter((f) => f.likes > 0)
+          .sort((a, b) => b.likes - a.likes)
+          .slice(0, 3);
+      }
+
+      // ---------- game actions ----------
+      const order = () => (D.host?.order || []).filter((id) => D.facts[id]);
+      function roundState(ord, i, prev) {
+        const f = D.facts[ord[i]];
+        return {
+          phase: "guessing",
+          session: D.host?.startedAt || null,
+          factId: ord[i],
+          idx: i,
+          total: ord.length,
+          text: f.text,
+          names: [...new Set(factList().map((x) => x.name))].sort((a, b) =>
+            a.localeCompare(b),
+          ),
+          top3: null,
+          totalGuesses: 0,
+          answer: null,
+          scores: prev?.scores || null,
+          answered: prev?.answered || 0,
+          results: null,
+          at: Date.now(),
+        };
+      }
+      async function act(fn) {
+        try {
+          await fn();
+          status("st-status", "");
+        } catch (e) {
+          status(
+            "st-status",
+            "That didn't save. Check the connection and try again.",
+            "err",
+          );
+        }
+      }
+      $("start").onclick = (e) =>
+        twice(e.currentTarget, "Click again to start", () =>
+          act(async () => {
+            const facts = factList();
+            if (!facts.length) return;
+            const up = {};
+            for (const fid in D.guesses)
+              for (const uid in D.guesses[fid])
+                if (!uid.startsWith("demo-"))
+                  up[`guesses/${fid}/${uid}`] = null;
+            for (const fid in D.likes)
+              for (const uid in D.likes[fid])
+                if (!uid.startsWith("demo-")) up[`likes/${fid}/${uid}`] = null;
+            if (Object.keys(up).length) await db.update(up);
+            const ord = shuffle(facts.map((f) => f.id));
+            const host = { order: ord, startedAt: Date.now() };
+            await db.set("host", host);
+            D.host = host;
+            await db.set("game", { phase: "intro", session: host.startedAt, at: Date.now() });
+            show("intro");
+          }),
+        );
+      $("open-first").onclick = () =>
+        act(async () => {
+          const ord = order();
+          if (!ord.length) {
+            status("intro-status", "No facts to play. Add some first.", "err");
+            return;
+          }
+          await db.set("game", roundState(ord, 0, null));
+          show("stage");
+        });
+      $("rev-guess").onclick = () =>
+        act(async () => {
+          const g = D.game;
+          if (g?.phase !== "guessing") return;
+          await db.update({
+            "game/phase": "tally",
+            "game/top3": tally(g.factId),
+            "game/totalGuesses": guessesFor(g.factId).length,
+          });
+        });
+      $("rev-answer").onclick = () =>
+        act(async () => {
+          const g = D.game;
+          if (g?.phase !== "tally") return;
+          const f = D.facts[g.factId];
+          if (!f) {
+            status("st-status", "This fact was removed.", "err");
+            return;
+          }
+          const ord = order(),
+            upto = ord.indexOf(g.factId) + 1;
+          await db.update({
+            "game/phase": "answer",
+            "game/answer": f.name,
+            "game/scores": scoresUpTo(ord, upto),
+            "game/answered": upto,
+          });
+        });
+      async function finish() {
+        const g = D.game || {},
+          ord = order();
+        const upto =
+          g.phase === "answer"
+            ? ord.indexOf(g.factId) + 1
+            : Math.max(0, ord.indexOf(g.factId));
+        const scores = scoresUpTo(ord, upto);
+        await db.set("game", {
+          phase: "done",
+          session: g.session || D.host?.startedAt || null,
+          scores,
+          answered: upto,
+          results: { leaderboard: leaderboard(scores), favs: favourites() },
+          at: Date.now(),
+        });
+        show("results");
+      }
+      $("next").onclick = () =>
+        act(async () => {
+          const g = D.game;
+          if (g?.phase !== "answer") return;
+          const ord = order(),
+            i = ord.indexOf(g.factId) + 1;
+          if (i <= 0 || i >= ord.length) return finish();
+          await db.set("game", roundState(ord, i, g));
+        });
+      $("end").onclick = (e) =>
+        twice(e.currentTarget, "Click again to end", () => act(finish));
+      document.addEventListener("keydown", (e) => {
+        if (
+          view !== "stage" ||
+          e.target.matches("input, textarea") ||
+          e.metaKey ||
+          e.ctrlKey
+        )
+          return;
+        const k = e.key.toLowerCase();
+        if (k === "g") $("rev-guess").click();
+        else if (k === "a") $("rev-answer").click();
+        else if (k === "n") $("next").click();
+      });
+
+      // ---------- navigation ----------
+      $("go-setup").onclick = () => {
+        factsRevealed = false;
+        show("setup");
+      };
+      $("setup-home").onclick =
+        $("intro-home").onclick =
+        $("stage-home").onclick =
+        $("results-home").onclick =
+          () => show("home");
+      $("resume").onclick = () =>
+        show(D.game?.phase === "intro" ? "intro" : "stage");
+      $("see-results").onclick = () => show("results");
+      $("fs").onclick = () => {
+        if (document.fullscreenElement)
+          document.exitFullscreen().catch(() => {});
+        else document.documentElement.requestFullscreen?.().catch(() => {});
+      };
+      document.addEventListener("fullscreenchange", () => {
+        $("fs").textContent = document.fullscreenElement
+          ? "Exit full screen"
+          : "Full screen";
+      });
+
+      // ---------- setup ----------
+      const newId = () =>
+        "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      $("add").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const n = $("a-name").value.trim(),
+          t = $("a-text").value.trim();
+        if (!n || !t) {
+          status("a-status", "Fill in both the name and the fact.", "err");
+          return;
+        }
+        try {
+          await db.set("facts/" + newId(), { name: n, text: t });
+          $("a-name").value = $("a-text").value = "";
+          status("a-status", "Added " + n, "ok");
+        } catch (_) {
+          status("a-status", "Couldn't add it. Try again.", "err");
+        }
+      });
+      function parse(raw) {
+        const out = [];
+        raw.split(/\r?\n/).forEach((line) => {
+          line = line.trim();
+          if (!line) return;
+          let p;
+          if (line.includes("\t")) p = line.split("\t");
+          else if (line.includes("|")) {
+            const i = line.indexOf("|");
+            p = [line.slice(0, i), line.slice(i + 1)];
+          } else {
+            const i = line.indexOf(":");
+            p = i > 0 ? [line.slice(0, i), line.slice(i + 1)] : null;
+          }
+          if (p && p[0].trim() && p.slice(1).join(" ").trim())
+            out.push({ name: p[0].trim(), text: p.slice(1).join(" ").trim() });
+        });
+        return out;
+      }
+      $("paste-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const rows = parse($("paste").value);
+        if (!rows.length) {
+          status("p-status", "No lines matched Name | fact.", "err");
+          return;
+        }
+        const up = {};
+        rows.forEach((r) => {
+          up["facts/" + newId() + Math.random().toString(36).slice(2, 4)] = r;
+        });
+        try {
+          await db.update(up);
+          $("paste").value = "";
+          status("p-status", `Imported ${rows.length}`, "ok");
+        } catch (_) {
+          status("p-status", "Couldn't import. Try again.", "err");
+        }
+      });
+      $("reveal-facts").onclick = (e) => {
+        if (factsRevealed) {
+          factsRevealed = false;
+          render();
+          return;
+        }
+        twice(e.currentTarget, "Spoilers! Click again to show", () => {
+          factsRevealed = true;
+          render();
+        });
+      };
+      $("list").addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-id]");
+        if (!b) return;
+        twice(b, "Confirm", async () => {
+          try {
+            await db.set("facts/" + b.dataset.id, null);
+          } catch (_) {}
+        });
+      });
+      const DEMO = [
+        [
+          "Maya Okafor",
+          "I once got stuck in an elevator with a famous chef and we swapped pancake recipes for two hours.",
+        ],
+        [
+          "Tom Lindqvist",
+          "I can solve a Rubik's cube in under 40 seconds, but only with my eyes closed.",
+        ],
+        [
+          "Aisha Rahman",
+          "I was an extra in a Bollywood dance scene and still know every step.",
+        ],
+        [
+          "Diego Ferreira",
+          "I have a pet tortoise named Usain who is older than my parents.",
+        ],
+        [
+          "Hannah Weiss",
+          "I hold my hometown's record for the longest hula-hoop session: 3 hours, 12 minutes.",
+        ],
+        [
+          "Kenji Watanabe",
+          "I accidentally joined a marathon in Lisbon while looking for a coffee shop and finished it.",
+        ],
+        [
+          "Sofia Marchetti",
+          "I trained as an opera singer for six years before switching to engineering.",
+        ],
+        [
+          "Liam O'Connor",
+          "I've visited 41 countries but have never seen snow.",
+        ],
+        [
+          "Priya Nair",
+          "I can name every country's capital alphabetically in under two minutes.",
+        ],
+        [
+          "Oluwaseun Adeyemi",
+          "I built a working go-kart out of an old lawnmower when I was 12.",
+        ],
+        [
+          "Emma Johansson",
+          "I was once a professional cheese taster for a summer in Switzerland.",
+        ],
+        [
+          "Rafael Ortiz",
+          "I've been struck by lightning. Mildly, but it still counts.",
+        ],
+        [
+          "Chloe Dubois",
+          "I speak fluent Klingon thanks to a very nerdy summer camp.",
+        ],
+        ["Arjun Mehta", "I won a regional yo-yo championship at age 15."],
+        ["Zara Ahmed", "I once delivered a baby goat on a farm stay in Wales."],
+      ];
+      $("load-demo").onclick = async () => {
+        const up = {},
+          names = DEMO.map((d) => d[0]);
+        const love = DEMO.map(() => Math.pow(Math.random(), 2.2));
+        DEMO.forEach(([name, text], i) => {
+          up[`facts/demo${String(i + 1).padStart(2, "0")}`] = {
+            name,
+            text,
+            demo: true,
+          };
+        });
+        for (let p = 1; p <= 15; p++) {
+          const uid = "demo-" + String(p).padStart(2, "0"),
+            me = names[(p * 7) % names.length],
+            skill = 0.25 + Math.random() * 0.45;
+          up["players/" + uid] = { name: me, joinedAt: Date.now(), demo: true };
+          DEMO.forEach((_, i) => {
+            const fid = `demo${String(i + 1).padStart(2, "0")}`,
+              r = Math.random();
+            const decoy = names[(i * 5 + (r < 0.8 ? 3 : p)) % names.length];
+            up[`guesses/${fid}/${uid}`] = {
+              guess: r < skill ? names[i] : decoy,
+              by: me,
+              at: Date.now(),
+            };
+            if (Math.random() < love[i]) up[`likes/${fid}/${uid}`] = true;
+          });
+        }
+        try {
+          await db.update(up);
+          status(
+            "setup-status",
+            "Demo data loaded: 15 facts and 15 demo players.",
+            "ok",
+          );
+        } catch (_) {
+          status("setup-status", "Couldn't load the demo data.", "err");
+        }
+      };
+      $("clear-demo").onclick = (e) =>
+        twice(e.currentTarget, "Click again to remove", async () => {
+          // Firebase rejects multi-path updates whose paths overlap, so a
+          // demo fact's whole guesses/likes node is deleted once, and demo
+          // players' entries are only removed under the remaining facts.
+          const up = {},
+            demoFacts = new Set();
+          for (const id in D.facts)
+            if (D.facts[id]?.demo) {
+              demoFacts.add(id);
+              up["facts/" + id] = null;
+              up["guesses/" + id] = null;
+              up["likes/" + id] = null;
+            }
+          for (const uid in D.players)
+            if (uid.startsWith("demo-") || D.players[uid]?.demo)
+              up["players/" + uid] = null;
+          for (const fid in D.guesses)
+            if (!demoFacts.has(fid))
+              for (const uid in D.guesses[fid])
+                if (uid.startsWith("demo-"))
+                  up[`guesses/${fid}/${uid}`] = null;
+          for (const fid in D.likes)
+            if (!demoFacts.has(fid))
+              for (const uid in D.likes[fid])
+                if (uid.startsWith("demo-")) up[`likes/${fid}/${uid}`] = null;
+          try {
+            if (Object.keys(up).length) await db.update(up);
+            status("setup-status", "Demo data removed.", "ok");
+          } catch (_) {
+            status("setup-status", "Couldn't remove the demo data.", "err");
+          }
+        });
+      $("reset-players").onclick = (e) =>
+        twice(e.currentTarget, "Click again to remove everyone", async () => {
+          try {
+            await db.set("players", null);
+            status(
+              "setup-status",
+              "Players removed. Anyone with the page open joins again when they reload it.",
+              "ok",
+            );
+          } catch (_) {
+            status("setup-status", "Couldn't remove the players.", "err");
+          }
+        });
+
+      // ---------- render ----------
+      let seenPlayers = new Set();
+      function render() {
+        const g = D.game || {};
+        const inGame = ["guessing", "tally", "answer"].includes(g.phase);
+        const intro = g.phase === "intro";
+        if (view === "home") {
+          const ps = Object.entries(D.players || {})
+            .map(([uid, p]) => ({ uid, ...p }))
+            .filter((p) => p.name)
+            .sort((a, b) => (b.joinedAt || 0) - (a.joinedAt || 0));
+          $("h-joined").textContent = ps.length;
+          $("h-joined-lbl").textContent =
+            ps.length === 1 ? "player has joined" : "players have joined";
+          $("h-chips").innerHTML =
+            ps
+              .slice(0, 40)
+              .map(
+                (p) =>
+                  `<span class="chip${seenPlayers.has(p.uid) ? "" : " new"}">${esc(p.name)}</span>`,
+              )
+              .join("") +
+            (ps.length > 40
+              ? `<span class="chip">+${ps.length - 40} more</span>`
+              : "");
+          ps.forEach((p) => seenPlayers.add(p.uid));
+          const n = factList().length;
+          $("start").textContent =
+            inGame || intro || g.phase === "done"
+              ? "Start a new game"
+              : "Start the game";
+          $("start").disabled = n === 0;
+          $("resume").hidden = !(inGame || intro);
+          $("see-results").hidden = g.phase !== "done";
+          $("start-note").textContent =
+            n === 0
+              ? "Add some facts first under Manage facts."
+              : `${n} doors ready.`;
+          $("mode-flag").innerHTML = isLocal
+            ? '<span class="demo-flag">Local demo mode</span> <span class="note">Open the player link in other tabs of this browser to play along.</span>'
+            : "";
+        }
+        if (view === "setup") {
+          const fs = factList().sort((a, b) => a.name.localeCompare(b.name));
+          $("s-count").textContent = fs.length;
+          $("list").hidden = !factsRevealed;
+          $("facts-hidden-note").hidden = factsRevealed;
+          const rb = $("reveal-facts");
+          if (factsRevealed) {
+            delete rb.dataset.armed;
+            rb.textContent = "Hide facts";
+          } else if (!rb.dataset.armed) rb.textContent = "Show facts";
+          $("list").innerHTML = factsRevealed && fs.length
+            ? fs
+                .map(
+                  (f) =>
+                    `<li><div><div class="who">${esc(f.name)}${f.demo ? " · demo" : ""}</div><div class="txt">${esc(f.text)}</div></div><button class="btn small" data-id="${esc(f.id)}">Remove</button></li>`,
+                )
+                .join("")
+            : '<li style="display:block"><p class="note" style="padding:16px 0;text-align:center">No facts yet. Add one, paste a batch, or load the demo data.</p></li>';
+        }
+        if (view === "intro") {
+          if (!intro) {
+            show(inGame ? "stage" : g.phase === "done" ? "results" : "home");
+            return;
+          }
+          const n = Object.keys(D.players || {}).length;
+          $("intro-players").textContent =
+            `${n} ${n === 1 ? "player" : "players"} waiting`;
+        }
+        if (view === "stage") {
+          if (!inGame) {
+            show(
+              g.phase === "done" ? "results" : intro ? "intro" : "home",
+            );
+            return;
+          }
+          const labels = {
+            guessing: "Guessing open",
+            tally: "Guesses revealed",
+            answer: "Answer revealed",
+          };
+          $("phase").querySelector("span").textContent = labels[g.phase];
+          $("phase").querySelector("i").style.background =
+            g.phase === "guessing" ? "var(--good)" : "var(--muted)";
+          $("st-num").textContent = `Door ${g.idx + 1} of ${g.total}`;
+          $("st-fact").textContent = g.text;
+          const n = guessesFor(g.factId).length,
+            players = Object.keys(D.players || {}).length;
+          $("st-live").textContent = n;
+          $("st-live-lbl").textContent =
+            `of ${players} ${players === 1 ? "player" : "players"} locked in`;
+          $("st-hearts").textContent = Object.values(
+            D.likes?.[g.factId] || {},
+          ).filter(Boolean).length;
+          $("rev-guess").disabled = g.phase !== "guessing";
+          $("rev-answer").disabled = g.phase !== "tally";
+          $("next").disabled = g.phase !== "answer";
+          $("next").textContent =
+            g.idx + 1 >= g.total ? "Finish & show results" : "Next door";
+          const res = g.phase !== "guessing";
+          $("st-results").hidden = !res;
+          if (res) {
+            $("st-podium").innerHTML = podiumHTML(
+              g.top3,
+              g.phase === "answer" ? g.answer : null,
+              g.totalGuesses,
+            );
+            $("st-answer").hidden = g.phase !== "answer";
+            if (g.phase === "answer") {
+              $("st-answer-name").textContent = g.answer;
+              const right = guessesFor(g.factId).filter(
+                (x) => norm(x.guess) === norm(g.answer),
+              ).length;
+              $("st-answer-stat").textContent =
+                `${right} of ${g.totalGuesses || 0} guessed right`;
+            }
+          }
+        }
+        if (view === "results") {
+          $("r-leader").innerHTML = leaderboardHTML(g.results?.leaderboard);
+          $("r-favs").innerHTML = favsHTML(g.results?.favs);
+        }
+      }
+
+      // ---------- boot ----------
+      function subscribe() {
+        subs.forEach((u) => u());
+        subs = [];
+        const onErr = () => {
+          status(
+            "setup-status",
+            "This account can't read the game data. Check the admin UID in your database rules.",
+            "err",
+          );
+        };
+        for (const k of ["facts", "players", "guesses", "likes", "host"])
+          subs.push(
+            db.on(
+              k,
+              (v) => {
+                D[k] = v || (k === "host" ? null : {});
+                render();
+              },
+              onErr,
+            ),
+          );
+        let first = true;
+        subs.push(
+          db.on(
+            "game",
+            (v) => {
+              const was = D.game?.phase;
+              D.game = v;
+              if (first) {
+                first = false;
+                const p = v?.phase;
+                show(
+                  ["guessing", "tally", "answer"].includes(p)
+                    ? "stage"
+                    : p === "intro"
+                      ? "intro"
+                      : p === "done"
+                      ? "results"
+                      : "home",
+                );
+                return;
+              }
+              if (v?.phase === "done" && was !== "done" && view === "stage")
+                show("results");
+              else render();
+            },
+            onErr,
+          ),
+        );
+      }
+      $("v-signin").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        status("si-status", "Signing in…");
+        try {
+          await db.signIn($("em").value.trim(), $("pw").value);
+          subscribe();
+        } catch (_) {
+          status("si-status", "That email and password didn't work.", "err");
+        }
+      });
+      (async () => {
+        drawQR();
+        db = await connect("host");
+        if (!db.isAdmin) {
+          show("signin");
+          return;
+        }
+        subscribe();
+      })();
+    </script>
+  </body>
 </html>
