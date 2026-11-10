@@ -219,6 +219,7 @@
           <h2 style="font-size: 22px">Favourite facts</h2>
           <div id="d-favs"></div>
         </div>
+        <div id="d-tip"></div>
       </section>
     </div>
 
@@ -236,6 +237,7 @@
         combobox,
         setHTML,
         confetti,
+        mountTip,
       } from "./common.js";
       butterflies(8);
 
@@ -398,6 +400,7 @@
             leaderboardHTML(g.results && g.results.leaderboard),
           );
           setHTML($("d-favs"), favsHTML(g.results && g.results.favs));
+          mountTip($("d-tip"));
           return;
         }
         if (g.session) remember("wst-session", g.session);

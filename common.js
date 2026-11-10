@@ -211,3 +211,36 @@ export function combobox(input, list, getNames, onChange) {
   document.addEventListener("click", (e) => { if (e.target !== input && !list.contains(e.target)) close(); });
   return { close };
 }
+
+/* A tongue-in-cheek "buy the host a coffee" card. No real payments, just fun. */
+export function tipHTML() {
+  return `<section class="card tip">
+    <div class="cup" aria-hidden="true">☕<i></i><i></i><i></i></div>
+    <h2>Buy the host a coffee?</h2>
+    <p class="note">Hosting this circus ran on pure caffeine and nerves. Totally optional, 100% imaginary.</p>
+    <div class="tiers">
+      <button class="btn small" type="button" data-say="Aww. One virtual sip received. ☕" data-em="☕">☕ A coffee</button>
+      <button class="btn small" type="button" data-say="Cookie accepted. Crumbs are now in the keyboard. 🍪" data-em="🍪">🍪 A cookie</button>
+      <button class="btn small" type="button" data-say="You absolute legend. A dramatic bow has been performed. 🎩" data-em="🦄">🦄 Legendary</button>
+    </div>
+    <p class="thanks" role="status" aria-live="polite"></p>
+    <p class="fine">Imaginary coffees donated: <b class="tip-n">0</b> · Paid in high-fives · No real money was harmed</p>
+  </section>`;
+}
+export function mountTip(host) {
+  if (host.dataset.tip) return;
+  host.dataset.tip = "1"; host.innerHTML = tipHTML();
+  const card = host.querySelector(".tip"); let n = 0;
+  const quips = ["Wow, a high-five just landed.", "The host is vibrating with joy.", "Barista says: you're welcome.", "Caffeine level: dangerously high."];
+  card.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-say]"); if (!b) return;
+    n++; card.querySelector(".tip-n").textContent = n;
+    card.querySelector(".thanks").textContent = n % 3 === 0 ? quips[(n / 3 - 1) % quips.length] : b.dataset.say;
+    const r = b.getBoundingClientRect(), c = card.getBoundingClientRect();
+    for (let i = 0; i < 5; i++) {
+      const p = document.createElement("span"); p.className = "puff"; p.textContent = b.dataset.em;
+      p.style.cssText = `left:${r.left - c.left + Math.random() * r.width}px;top:${r.top - c.top}px;--r:${Math.random() * 60 - 30}deg;animation-delay:${i * .08}s`;
+      card.appendChild(p); setTimeout(() => p.remove(), 1800);
+    }
+  });
+}
