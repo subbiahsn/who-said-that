@@ -5,19 +5,19 @@
 
     "game": {
       ".read": "auth != null",
-      ".write": "auth.uid === 'ADMIN_UID'"
+      ".write": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'"
     },
     "host": {
-      ".read": "auth.uid === 'ADMIN_UID'",
-      ".write": "auth.uid === 'ADMIN_UID'"
+      ".read": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
+      ".write": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'"
     },
     "facts": {
-      ".read": "auth.uid === 'ADMIN_UID'",
-      ".write": "auth.uid === 'ADMIN_UID'"
+      ".read": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
+      ".write": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'"
     },
     "players": {
-      ".read": "auth.uid === 'ADMIN_UID'",
-      ".write": "auth.uid === 'ADMIN_UID'",
+      ".read": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
+      ".write": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
       "$uid": {
         ".read": "auth.uid === $uid",
         ".write": "auth.uid === $uid",
@@ -25,8 +25,8 @@
       }
     },
     "guesses": {
-      ".read": "auth.uid === 'ADMIN_UID'",
-      ".write": "auth.uid === 'ADMIN_UID'",
+      ".read": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
+      ".write": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
       "$factId": {
         "$uid": {
           ".read": "auth.uid === $uid",
@@ -36,8 +36,8 @@
       }
     },
     "likes": {
-      ".read": "auth.uid === 'ADMIN_UID'",
-      ".write": "auth.uid === 'ADMIN_UID'",
+      ".read": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
+      ".write": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
       "$factId": {
         "$uid": {
           ".read": "auth.uid === $uid",
