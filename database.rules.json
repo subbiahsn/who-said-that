@@ -1,0 +1,50 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "game": {
+      ".read": "auth != null",
+      ".write": "auth.uid === 'ADMIN_UID'"
+    },
+    "host": {
+      ".read": "auth.uid === 'ADMIN_UID'",
+      ".write": "auth.uid === 'ADMIN_UID'"
+    },
+    "facts": {
+      ".read": "auth.uid === 'ADMIN_UID'",
+      ".write": "auth.uid === 'ADMIN_UID'"
+    },
+    "players": {
+      ".read": "auth.uid === 'ADMIN_UID'",
+      ".write": "auth.uid === 'ADMIN_UID'",
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid",
+        ".validate": "newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40"
+      }
+    },
+    "guesses": {
+      ".read": "auth.uid === 'ADMIN_UID'",
+      ".write": "auth.uid === 'ADMIN_UID'",
+      "$factId": {
+        "$uid": {
+          ".read": "auth.uid === $uid",
+          ".write": "auth.uid === $uid && !data.exists() && newData.exists() && root.child('game/phase').val() === 'guessing' && root.child('game/factId').val() === $factId",
+          ".validate": "newData.child('guess').isString() && newData.child('guess').val().length <= 60"
+        }
+      }
+    },
+    "likes": {
+      ".read": "auth.uid === 'ADMIN_UID'",
+      ".write": "auth.uid === 'ADMIN_UID'",
+      "$factId": {
+        "$uid": {
+          ".read": "auth.uid === $uid",
+          ".write": "auth.uid === $uid && root.child('game/factId').val() === $factId",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+}
