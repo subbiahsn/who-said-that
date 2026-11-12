@@ -39,7 +39,7 @@ While `firebaseConfig` in `config.js` is `null`, everything runs in one browser 
 python3 -m http.server 8000
 ```
 
-1. Open `http://localhost:8000/host.html`, go to **Manage facts**, then **Load demo data** (15 facts and 15 players).
+1. Open `http://localhost:8000/host.html`, go to **Manage facts** and add or paste a few facts.
 2. Open `http://localhost:8000/index.html` in more tabs. Each tab is a separate player.
 3. Press **Start the game** on the host tab.
 
@@ -72,4 +72,5 @@ Full steps are in [SETUP.md](SETUP.md). In short:
 - Firebase's free plan allows 100 simultaneous connections.
 - Players who refresh keep their name and guesses (same browser).
 - **Start a new game** reshuffles the doors and clears earlier guesses and hearts. Players stay joined.
+- **Reset everything** (Manage facts) wipes all facts, players, guesses and game state.
 - Manage facts hides the facts by default. Revealing them takes a confirmation, to avoid spoilers.

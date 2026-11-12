@@ -285,19 +285,15 @@
               <span class="note">facts behind doors</span>
             </p>
             <div class="row">
-              <button class="btn small" id="load-demo">Load demo data</button>
-              <button class="btn small" id="clear-demo">
-                Remove demo data
-              </button>
+              <button class="btn small" id="reset-all">Reset everything</button>
               <button class="btn small" id="reset-players">
                 Remove all players
               </button>
             </div>
           </div>
           <p class="note">
-            Demo data adds 15 made-up facts plus 15 made-up players who have
-            already guessed and picked favourites, so the reveals have numbers
-            in them.
+            <b>Reset everything</b> deletes all facts, players, guesses,
+            favourites and the current game, so you can start fresh.
           </p>
           <span class="status" id="setup-status" role="status"></span>
         </div>
@@ -885,132 +881,25 @@
           } catch (_) {}
         });
       });
-      const DEMO = [
-        [
-          "Maya Okafor",
-          "I once got stuck in an elevator with a famous chef and we swapped pancake recipes for two hours.",
-        ],
-        [
-          "Tom Lindqvist",
-          "I can solve a Rubik's cube in under 40 seconds, but only with my eyes closed.",
-        ],
-        [
-          "Aisha Rahman",
-          "I was an extra in a Bollywood dance scene and still know every step.",
-        ],
-        [
-          "Diego Ferreira",
-          "I have a pet tortoise named Usain who is older than my parents.",
-        ],
-        [
-          "Hannah Weiss",
-          "I hold my hometown's record for the longest hula-hoop session: 3 hours, 12 minutes.",
-        ],
-        [
-          "Kenji Watanabe",
-          "I accidentally joined a marathon in Lisbon while looking for a coffee shop and finished it.",
-        ],
-        [
-          "Sofia Marchetti",
-          "I trained as an opera singer for six years before switching to engineering.",
-        ],
-        [
-          "Liam O'Connor",
-          "I've visited 41 countries but have never seen snow.",
-        ],
-        [
-          "Priya Nair",
-          "I can name every country's capital alphabetically in under two minutes.",
-        ],
-        [
-          "Oluwaseun Adeyemi",
-          "I built a working go-kart out of an old lawnmower when I was 12.",
-        ],
-        [
-          "Emma Johansson",
-          "I was once a professional cheese taster for a summer in Switzerland.",
-        ],
-        [
-          "Rafael Ortiz",
-          "I've been struck by lightning. Mildly, but it still counts.",
-        ],
-        [
-          "Chloe Dubois",
-          "I speak fluent Klingon thanks to a very nerdy summer camp.",
-        ],
-        ["Arjun Mehta", "I won a regional yo-yo championship at age 15."],
-        ["Zara Ahmed", "I once delivered a baby goat on a farm stay in Wales."],
-      ];
-      $("load-demo").onclick = async () => {
-        const up = {},
-          names = DEMO.map((d) => d[0]);
-        const love = DEMO.map(() => Math.pow(Math.random(), 2.2));
-        DEMO.forEach(([name, text], i) => {
-          up[`facts/demo${String(i + 1).padStart(2, "0")}`] = {
-            name,
-            text,
-            demo: true,
-          };
-        });
-        for (let p = 1; p <= 15; p++) {
-          const uid = "demo-" + String(p).padStart(2, "0"),
-            me = names[(p * 7) % names.length],
-            skill = 0.25 + Math.random() * 0.45;
-          up["players/" + uid] = { name: me, joinedAt: Date.now(), demo: true };
-          DEMO.forEach((_, i) => {
-            const fid = `demo${String(i + 1).padStart(2, "0")}`,
-              r = Math.random();
-            const decoy = names[(i * 5 + (r < 0.8 ? 3 : p)) % names.length];
-            up[`guesses/${fid}/${uid}`] = {
-              guess: r < skill ? names[i] : decoy,
-              by: me,
-              at: Date.now(),
-            };
-            if (Math.random() < love[i]) up[`likes/${fid}/${uid}`] = true;
-          });
-        }
-        try {
-          await db.update(up);
-          status(
-            "setup-status",
-            "Demo data loaded: 15 facts and 15 demo players.",
-            "ok",
-          );
-        } catch (_) {
-          status("setup-status", "Couldn't load the demo data.", "err");
-        }
-      };
-      $("clear-demo").onclick = (e) =>
-        twice(e.currentTarget, "Click again to remove", async () => {
-          // Firebase rejects multi-path updates whose paths overlap, so a
-          // demo fact's whole guesses/likes node is deleted once, and demo
-          // players' entries are only removed under the remaining facts.
-          const up = {},
-            demoFacts = new Set();
-          for (const id in D.facts)
-            if (D.facts[id]?.demo) {
-              demoFacts.add(id);
-              up["facts/" + id] = null;
-              up["guesses/" + id] = null;
-              up["likes/" + id] = null;
-            }
-          for (const uid in D.players)
-            if (uid.startsWith("demo-") || D.players[uid]?.demo)
-              up["players/" + uid] = null;
-          for (const fid in D.guesses)
-            if (!demoFacts.has(fid))
-              for (const uid in D.guesses[fid])
-                if (uid.startsWith("demo-"))
-                  up[`guesses/${fid}/${uid}`] = null;
-          for (const fid in D.likes)
-            if (!demoFacts.has(fid))
-              for (const uid in D.likes[fid])
-                if (uid.startsWith("demo-")) up[`likes/${fid}/${uid}`] = null;
+      $("reset-all").onclick = (e) =>
+        twice(e.currentTarget, "Click again to DELETE ALL DATA", async () => {
           try {
-            if (Object.keys(up).length) await db.update(up);
-            status("setup-status", "Demo data removed.", "ok");
+            await db.update({
+              facts: null,
+              players: null,
+              guesses: null,
+              likes: null,
+              host: null,
+              game: null,
+            });
+            factsRevealed = false;
+            status(
+              "setup-status",
+              "Everything was reset. Players who still have the page open will rejoin when they reload it.",
+              "ok",
+            );
           } catch (_) {
-            status("setup-status", "Couldn't remove the demo data.", "err");
+            status("setup-status", "Couldn't reset the data.", "err");
           }
         });
       $("reset-players").onclick = (e) =>
@@ -1086,7 +975,7 @@
                     `<li><div><div class="who">${esc(f.name)}${f.demo ? " · demo" : ""}</div><div class="txt">${esc(f.text)}</div></div><button class="btn small" data-id="${esc(f.id)}">Remove</button></li>`,
                 )
                 .join("")
-            : '<li style="display:block"><p class="note" style="padding:16px 0;text-align:center">No facts yet. Add one, paste a batch, or load the demo data.</p></li>';
+            : '<li style="display:block"><p class="note" style="padding:16px 0;text-align:center">No facts yet. Add one or paste a batch.</p></li>';
         }
         if (view === "intro") {
           if (!intro) {
@@ -1190,8 +1079,6 @@
                     ? "stage"
                     : p === "intro"
                       ? "intro"
-                      : p === "done"
-                      ? "results"
                       : "home",
                 );
                 return;

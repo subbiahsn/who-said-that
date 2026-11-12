@@ -14,7 +14,7 @@ While `config.js` has `firebaseConfig = null`, everything runs inside one browse
    cd who-said-that-site
    python3 -m http.server 8000
    ```
-2. Open `http://localhost:8000/host.html` → **Manage facts** → **Load demo data** → **Back to home**.
+2. Open `http://localhost:8000/host.html` → **Manage facts** and add or paste a few facts, then **Back to home**.
 3. Open `http://localhost:8000/index.html` in one or two more tabs. Each tab counts as a different player.
 4. Press **Start the game** on the host tab and play.
 
@@ -64,7 +64,7 @@ Then in Firebase: **Authentication → Settings → Authorized domains → Add d
 
 ### 6. Run the game
 1. Open `https://your-site/host.html` and sign in with the email and password from step 2.
-2. **Manage facts**: paste the submissions (`Name | fact`, one per line), or add them one by one. Try **Load demo data** first if you like, then **Remove demo data** before the real game.
+2. **Manage facts**: paste the submissions (`Name | fact`, one per line), or add them one by one.
 3. Go back to **Home** and press **Full screen**. Players scan the QR code and enter their names, and you watch them appear.
 4. **Start the game**. For each door: **Reveal guesses** (shows the top 3 and closes guessing on every phone) → **Reveal answer** → **Next door**.
 5. After the last door, **Finish & show results** shows the top 5 guessers and the most loved facts.
