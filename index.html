@@ -399,7 +399,7 @@
               "The host has ended the game. Keep this page open for the next one.";
             $("d-score").textContent = "";
           }
-          mountTip($("d-tip"));
+          mountTip($("d-tip"), { db });
           return;
         }
         if (g.session) remember("wst-session", g.session);

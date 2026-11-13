@@ -428,47 +428,66 @@ export function combobox(input, list, getNames, onChange) {
 }
 
 /* A tongue-in-cheek "buy the host a coffee" card. No real payments, just fun.
-   Host screen: a plain thank-you message. Player screen: coffee + love buttons. */
-export function mountTip(host, { message = false } = {}) {
+   Player screen: coffee + love buttons (counts are saved under tips/<uid>).
+   Host screen: a live glass that fills with every coffee all players send. */
+const MAX_COFFEE = 10;
+const glassHTML = '<div class="glass" role="img" aria-label="Coffee glass"><div class="liquid"></div></div>';
+const setGlass = (card, n) => {
+  card.querySelector(".liquid").style.height = Math.min(100, n / MAX_COFFEE * 100) + "%";
+  card.querySelector(".glass").classList.toggle("full", n >= MAX_COFFEE);
+};
+const MOP = "It's overflowing! Someone get the mop.";
+
+/* Host: returns update(totalCoffees) */
+export function mountHostTip(host) {
+  host.innerHTML = `<section class="card tip">
+    <h2>Buy your wonderful hosts a coffee ☕</h2>
+    ${glassHTML}
+    <p class="tipcount"><b class="tip-total">0</b> <span class="tip-lbl">coffees on their way</span></p>
+    <p class="thanks" role="status" aria-live="polite"></p>
+  </section>`;
+  const card = host.querySelector(".tip");
+  return (n) => {
+    card.querySelector(".tip-total").textContent = n;
+    card.querySelector(".tip-lbl").textContent = n === 1 ? "coffee on its way" : "coffees on their way";
+    card.querySelector(".thanks").textContent = n > MAX_COFFEE ? MOP : "";
+    setGlass(card, n);
+  };
+}
+
+/* Player */
+export function mountTip(host, { db } = {}) {
   if (host.dataset.tip) return;
   host.dataset.tip = "1";
-  if (message) {
-    host.innerHTML = `<section class="card tip">
-      <div class="cup" aria-hidden="true">☕<i></i><i></i><i></i></div>
-      <h2>Buy your wonderful hosts a coffee</h2>
-    </section>`;
-    return;
-  }
-  const MAX = 10;
   host.innerHTML = `<section class="card tip">
-    <h2>Buy the host a coffee?</h2>
-    <p class="note">Totally optional, 100% imaginary. Fill the glass!</p>
-    <div class="glass" role="img" aria-label="Coffee glass"><div class="liquid"></div><span class="lvl">0 / ${MAX}</span></div>
+    <h2>Buy the host a coffee</h2>
+    ${glassHTML}
     <div class="tiers">
-      <button class="btn small" type="button" data-kind="coffee">☕ Coffee</button>
-      <button class="btn small" type="button" data-kind="love">♥ Love</button>
+      <button class="btn small" type="button" data-kind="coffee">☕ Coffee · <b class="tip-c">0</b></button>
+      <button class="btn small" type="button" data-kind="love">♥ Love · <b class="tip-l">0</b></button>
     </div>
     <p class="thanks" role="status" aria-live="polite"></p>
-    <p class="fine">Coffees: <b class="tip-c">0</b> · Love: <b class="tip-l">0</b> · No real money was harmed</p>
   </section>`;
   const card = host.querySelector(".tip"); let coffee = 0, love = 0;
   const say = card.querySelector(".thanks");
+  const paint = () => {
+    card.querySelector(".tip-c").textContent = coffee;
+    card.querySelector(".tip-l").textContent = love;
+    setGlass(card, coffee);
+  };
+  const save = () => { try { db && db.uid && db.set("tips/" + db.uid, { coffee, love }).catch(() => {}); } catch (_) {} };
+  try { db && db.uid && db.get("tips/" + db.uid).then((v) => { if (v && !coffee && !love) { coffee = +v.coffee || 0; love = +v.love || 0; paint(); } }).catch(() => {}); } catch (_) {}
   card.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-kind]"); if (!b) return;
     let em;
     if (b.dataset.kind === "coffee") {
       coffee++; em = "☕";
-      card.querySelector(".tip-c").textContent = coffee;
-      card.querySelector(".liquid").style.height = Math.min(100, coffee / MAX * 100) + "%";
-      card.querySelector(".lvl").textContent = Math.min(coffee, MAX) + " / " + MAX;
-      say.textContent = coffee < MAX ? (coffee === 1 ? "A sip! The host is delighted." : "Pouring… keep it coming.")
-        : coffee === MAX ? "Glass full! The host is buzzing. ☕" : "It's overflowing! Somebody get a mop.";
-      card.querySelector(".glass").classList.toggle("full", coffee >= MAX);
+      say.textContent = coffee > MAX_COFFEE ? MOP : coffee === MAX_COFFEE ? "Glass full! The host is buzzing. ☕" : coffee === 1 ? "A sip! The host is delighted." : "Pouring… keep it coming.";
     } else {
       love++; em = "♥";
-      card.querySelector(".tip-l").textContent = love;
       say.textContent = love % 5 === 0 ? "The host is blushing." : "Love received. ♥";
     }
+    paint(); save();
     const r = b.getBoundingClientRect(), cr = card.getBoundingClientRect();
     for (let i = 0; i < 5; i++) {
       const p = document.createElement("span"); p.className = "puff"; p.textContent = em;

@@ -493,7 +493,7 @@
         favsHTML,
         setHTML,
         confetti,
-        mountTip,
+        mountHostTip,
         PLAYER_URL,
       } from "./common.js";
       butterflies(12);
@@ -505,7 +505,9 @@
         likes: {},
         host: null,
         game: null,
+        tips: {},
       };
+      let tipUpdate = null;
       let factsRevealed = false;
       let db,
         view = null,
@@ -889,6 +891,7 @@
               players: null,
               guesses: null,
               likes: null,
+              tips: null,
               host: null,
               game: null,
             });
@@ -1038,7 +1041,13 @@
         if (view === "results") {
           setHTML($("r-leader"), leaderboardHTML(g.results?.leaderboard));
           setHTML($("r-favs"), favsHTML(g.results?.favs));
-          mountTip($("r-tip"), { message: true });
+          if (!tipUpdate) tipUpdate = mountHostTip($("r-tip"));
+          tipUpdate(
+            Object.values(D.tips || {}).reduce(
+              (s, t) => s + (+t?.coffee || 0),
+              0,
+            ),
+          );
         }
       }
 
@@ -1053,7 +1062,7 @@
             "err",
           );
         };
-        for (const k of ["facts", "players", "guesses", "likes", "host"])
+        for (const k of ["facts", "players", "guesses", "likes", "host", "tips"])
           subs.push(
             db.on(
               k,

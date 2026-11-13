@@ -35,6 +35,16 @@
         }
       }
     },
+    "tips": {
+      ".read": "auth.uid === 'ADMIN_UID'",
+      ".write": "auth.uid === 'ADMIN_UID'",
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid",
+        "coffee": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 500" },
+        "love": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 500" }
+      }
+    },
     "likes": {
       ".read": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",
       ".write": "auth.uid === 'Y7G7OsI8smUGueybWz20EYVPOt23'",

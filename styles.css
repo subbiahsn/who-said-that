@@ -226,5 +226,7 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); }
 .tip .glass .liquid { position: absolute; left: 0; right: 0; bottom: 0; height: 0; transition: height .6s cubic-bezier(.3,1.4,.5,1);
   background: linear-gradient(#8a5a2b, #4a2a10); }
 .tip .glass .liquid::before { content: ""; position: absolute; left: 0; right: 0; top: -4px; height: 8px; background: #d9a066; border-radius: 50%; }
+.tip .tipcount { font-size: 22px; font-weight: 800; color: var(--candle); margin: 0; }
+.tip .tipcount b { font-family: var(--display); font-size: 40px; }
 .tip .glass .lvl { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
 .tip .glass.full { animation: overflow .5s ease-in-out 3; border-color: var(--gold); }
