@@ -435,8 +435,7 @@ export function mountTip(host, { message = false } = {}) {
   if (message) {
     host.innerHTML = `<section class="card tip">
       <div class="cup" aria-hidden="true">☕<i></i><i></i><i></i></div>
-      <h2>A big thank you to our wonderful host!</h2>
-      <p class="note">Fuelled by pure caffeine and nerves. The coffee is on all of us. ♥</p>
+      <h2>Buy your wonderful hosts a coffee</h2>
     </section>`;
     return;
   }

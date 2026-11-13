@@ -207,8 +207,8 @@
         style="display: flex; flex-direction: column; gap: 20px"
       >
         <div class="card gold" style="text-align: center">
-          <h2 style="font-size: 30px; color: var(--candle)">That's a wrap!</h2>
-          <p class="note">The host has ended the game. Thanks for playing!</p>
+          <h2 id="d-title" style="font-size: 30px; color: var(--candle)">That's a wrap!</h2>
+          <p class="note" id="d-note">The host has ended the game. Thanks for playing!</p>
           <p class="verdict" id="d-score"></p>
         </div>
         <div id="d-tip"></div>
@@ -378,15 +378,27 @@
           return;
         }
         if (g.phase === "done") {
-          if (!g.session || recall("wst-session") !== g.session) {
-            show("s-ended");
-            return;
-          }
+          // Players who took part see their score. Anyone arriving after the
+          // game ended just sees that it's over. Everyone gets the tip card.
+          const took =
+            g.session && recall("wst-session") === g.session
+              ? true
+              : !!(g.scores && g.scores[db.uid] !== undefined);
           if ($("s-done").hidden) setTimeout(() => confetti(), 600);
           show("s-done");
-          const sc = (g.scores && g.scores[db.uid]) || 0,
-            total = g.answered || 0;
-          $("d-score").textContent = `You got ${sc} of ${total} right.`;
+          if (took) {
+            const sc = (g.scores && g.scores[db.uid]) || 0,
+              total = g.answered || 0;
+            $("d-title").textContent = "That's a wrap!";
+            $("d-note").textContent =
+              "The host has ended the game. Thanks for playing!";
+            $("d-score").textContent = `You got ${sc} of ${total} right.`;
+          } else {
+            $("d-title").textContent = "The game has ended";
+            $("d-note").textContent =
+              "The host has ended the game. Keep this page open for the next one.";
+            $("d-score").textContent = "";
+          }
           mountTip($("d-tip"));
           return;
         }
