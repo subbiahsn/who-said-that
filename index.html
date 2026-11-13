@@ -211,14 +211,6 @@
           <p class="note">The host has ended the game. Thanks for playing!</p>
           <p class="verdict" id="d-score"></p>
         </div>
-        <div class="card">
-          <h2 style="font-size: 22px">Best guessers</h2>
-          <div id="d-leader"></div>
-        </div>
-        <div class="card">
-          <h2 style="font-size: 22px">Favourite facts</h2>
-          <div id="d-favs"></div>
-        </div>
         <div id="d-tip"></div>
       </section>
     </div>
@@ -395,11 +387,6 @@
           const sc = (g.scores && g.scores[db.uid]) || 0,
             total = g.answered || 0;
           $("d-score").textContent = `You got ${sc} of ${total} right.`;
-          setHTML(
-            $("d-leader"),
-            leaderboardHTML(g.results && g.results.leaderboard),
-          );
-          setHTML($("d-favs"), favsHTML(g.results && g.results.favs));
           mountTip($("d-tip"));
           return;
         }

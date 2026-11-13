@@ -209,7 +209,7 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); }
 .tip .cup i:nth-child(1) { left: 12px; } .tip .cup i:nth-child(2) { left: 26px; animation-delay: .8s; } .tip .cup i:nth-child(3) { left: 38px; animation-delay: 1.6s; }
 .tip h2 { font-size: 26px; color: var(--candle); }
 .tip .tiers { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.tip .tiers .btn { flex: 1 1 150px; }
+.tip .tiers .btn { flex: 1 1 130px; }
 .tip .thanks { min-height: 1.4em; font-weight: 800; color: var(--candle); }
 .tip .fine { font-size: 12px; color: var(--muted); }
 .tip .puff { position: absolute; pointer-events: none; font-size: 26px; animation: floatUp 1.4s ease-out forwards; }
@@ -217,3 +217,14 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); }
   .leader li, .fav, .leader .rank-1, .fav.top { opacity: 1; animation: none; }
   .leader .rank-1::after, .leader .rank-1 .medal, #v-results .title, #s-done h2, #v-results .card, #s-done .card, .tip, .tip .cup, .tip .cup i { animation: none; }
 }
+
+/* Coffee glass (player tip card) */
+@keyframes slosh { 0%,100% { border-radius: 0 0 0 0; transform: translateX(0); } 50% { transform: translateX(2px); } }
+@keyframes overflow { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.tip .glass { position: relative; width: 96px; height: 130px; border: 3px solid rgba(255,255,255,.7); border-top-color: rgba(255,255,255,.35);
+  border-radius: 6px 6px 22px 22px; clip-path: polygon(0 0, 100% 0, 92% 100%, 8% 100%); overflow: hidden; background: rgba(255,255,255,.06); margin-inline: auto; }
+.tip .glass .liquid { position: absolute; left: 0; right: 0; bottom: 0; height: 0; transition: height .6s cubic-bezier(.3,1.4,.5,1);
+  background: linear-gradient(#8a5a2b, #4a2a10); }
+.tip .glass .liquid::before { content: ""; position: absolute; left: 0; right: 0; top: -4px; height: 8px; background: #d9a066; border-radius: 50%; }
+.tip .glass .lvl { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+.tip .glass.full { animation: overflow .5s ease-in-out 3; border-color: var(--gold); }

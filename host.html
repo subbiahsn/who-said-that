@@ -1038,7 +1038,7 @@
         if (view === "results") {
           setHTML($("r-leader"), leaderboardHTML(g.results?.leaderboard));
           setHTML($("r-favs"), favsHTML(g.results?.favs));
-          mountTip($("r-tip"));
+          mountTip($("r-tip"), { message: true });
         }
       }
 
